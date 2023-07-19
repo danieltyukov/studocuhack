@@ -46,16 +46,14 @@ function refreshButtons(){
 
 const mutationObserver = new MutationObserver(refreshButtons);
 
-window.addEventListener('load', function(){
-    let oldButtons = document.querySelectorAll(".fa-cloud-arrow-down");
-    if(oldButtons.length > 0) {
-        try{
-            refreshButtons();
-        }catch(err){
-            console.log(err);
-        }finally{
-            let monitorElement = document.querySelector("#viewer-wrapper");
-            mutationObserver.observe(monitorElement, { attributes: true, childList: true, subtree: true});
-        }
+let oldButtons = document.querySelectorAll(".fa-cloud-arrow-down");
+if(oldButtons.length > 0) {
+    try{
+        refreshButtons();
+    }catch(err){
+        console.log(err);
+    }finally{
+        let monitorElement = document.querySelector("#viewer-wrapper");
+        mutationObserver.observe(monitorElement, { attributes: true, childList: true, subtree: true});
     }
-});
+}

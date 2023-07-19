@@ -40,4 +40,12 @@ Studocuhack is a chrome/firefox extension for www.studocu.com and www.studeersne
 
 ## Firefox Installation:
         
-    COMING SOON
+    1) Download the file and extract it to a preferred folder
+
+    2) Navigate to the extensions page in Firefox by typing (about:addons) in the address bar or by clicking the hamburger menu in the top-right corner and selecting "Add-ons" from the drop-down menu
+
+    3) Click on the cog icon in the top-left corner of the page and select "Install Add-on From File..." from the drop-down menu that appears
+
+    4) Navigate to and select the directory where you saved the extension (.xpi file)
+
+    5) Happy Studying :)
