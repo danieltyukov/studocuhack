@@ -40,16 +40,4 @@ Studocuhack is a chrome/firefox extension for www.studocu.com and www.studeersne
 
 ## Firefox Installation:
         
-    1) Download the add-on file and save it in a convenient location on your system
-
-    2) Launch Firefox and type (about:debugging) into the address bar and press Enter
-
-    3) Click "This Firefox" in the left sidebar
-
-    4) Locate and click on the "Load Temporary Add-on..." button
-
-    5) Navigate to the directory where you saved and extracted the add-on files. Find and select the manifest file ('manifest.json') of the add-on, then click "Open".
-
-    6) Happy Studying :)
-
-  ![firefox](https://github.com/danieltyukov/studocuhack/assets/60662998/d3efb88b-58e0-4d5f-98f5-386b65a11058)
+    COMING SOON
