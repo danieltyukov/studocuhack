@@ -1,5 +1,5 @@
 <p align="center">
-
+![studocuhack-banner](https://github.com/danieltyukov/studocuhack/assets/60662998/841574e5-d6cf-4ea9-975a-bcda51bf9240)
 </p>
 
 #
