@@ -49,3 +49,5 @@ Studocuhack is a chrome/firefox extension for www.studocu.com and www.studeersne
     4) Navigate to and select the directory where you saved the extension (.xpi file)
 
     5) Happy Studying :)
+
+  ![firefox](https://github.com/danieltyukov/studocuhack/assets/60662998/474a90db-ba21-4e4f-b07d-6cb38e69d5cb)
