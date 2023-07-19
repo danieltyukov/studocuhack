@@ -1,7 +1,7 @@
 document.addEventListener('load', function () {
 
     let checkVersion = function () {
-        let version = chrome.runtime.getManifest().version;
+        let version = browser.runtime.getManifest().version;
 
         let button_cv = document.createElement("button");
         button_cv.classList.add("github-button", "tooltip-bottom");
