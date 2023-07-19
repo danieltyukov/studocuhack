@@ -20,6 +20,8 @@ Studocuhack is a chrome/firefox extension for www.studocu.com and www.studeersne
     
     3) In the new tab, use the Ctrl + P shortcut to access the print dialog. Choose 'Save as PDF' to download the document
 
+[DOWNLOAD ZIP/XPI FILE FROM HERE](https://github.com/danieltyukov/studocuhack/releases)
+
 ## Chrome Installation:
     
     1) Download the file and extract it to a preferred folder
