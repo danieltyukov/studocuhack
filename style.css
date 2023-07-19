@@ -1,0 +1,98 @@
+body .nofilter {
+    filter: unset !important;
+}
+
+.download-button-1, .download-button-2, .github-button {
+    background: inherit;
+    border-radius: 3px;
+    color: white;
+    display: inline-flex;
+    line-height: normal;
+    vertical-align: middle;
+    transition: .3s;
+}
+
+.download-button-1 {
+    background-color: #2cc302;
+    display: block;
+    line-height: 1.4286;
+    margin-right: 20px;
+    padding: 8px 20px;
+    border-radius: 100%;
+}
+
+.download-button-1:hover {
+    background-color: #259f02;
+}
+
+.download-button-2 {
+    height: 30px;
+    margin: 0 5px;
+    min-width: 30px;
+}
+
+.github-button {
+    background-color: #333;
+    border: solid 1px #333;
+    display: block;
+    line-height: 1.4286;
+    margin-right: 20px;
+    padding: 8px 20px;
+    border-radius: 100%;
+}
+
+.tooltip-bottom {
+    position: relative;
+    display: inline-flex;
+    border-bottom: solid 1px black;
+}
+
+.tooltip-bottom .tooltiptext-bottom {
+    visibility: hidden;
+    width: 200px;
+    background-color: #555;
+    color: white;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    top: 120%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity .3s;
+}
+
+.tooltip-bottom .tooltiptext-bottom::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #555 transparent;
+}
+
+.tooltip-bottom:hover .tooltiptext-bottom {
+    visibility: visible;
+    opacity: 1;
+}
+
+.download-text {
+    margin-left: 5px;
+}
+
+@media (max-width: 600px) {
+    .download-text {
+        margin-left: 5px;
+        display: none;
+    }
+}
+
+@media print {
+    .p2hv .stopoverlappingourstyleplease {
+        display: block;
+    }
+}
