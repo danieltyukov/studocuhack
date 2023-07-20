@@ -51,3 +51,4 @@ Studocuhack is a chrome/firefox extension for www.studocu.com and www.studeersne
     5) Happy Studying :)
 
    ![firefox](https://github.com/danieltyukov/studocuhack/assets/60662998/474a90db-ba21-4e4f-b07d-6cb38e69d5cb)
+   ![firefox-2](https://github.com/danieltyukov/studocuhack/assets/60662998/59579c15-8a99-43e0-8716-d47f3657a253)
