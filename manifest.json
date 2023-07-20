@@ -10,7 +10,7 @@
     "128": "images/128.png" },
  
   "content_scripts": [{
-    "js": ["check-ver.js", "remove-bar.js", "view-doc.js"],
+    "js": ["update-inter.js", "view-doc.js"],
     "css": ["style.css"],
     "matches": ["https://www.studocu.com/*", "https://www.studeersnel.nl/*"]
   }]
