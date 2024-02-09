@@ -6,6 +6,14 @@ if(bannerElement){
         banners[0].remove();
     }
 }
+
+var banner_wrapper = document.querySelectorAll("_8690b6fc16a3,.banner-wrapper,_4d5ecd011027");
+if (banner_wrapper != null) {
+    for (i = 0; i < banner_wrapper.length; i++) {
+        banner_wrapper[i].style.display = "none";
+    }
+}
+
 // Remove premium button
 let premiumButton = document.querySelector('#header-position-handle')?.childNodes[0]?.childNodes[1]?.childNodes[0]?.childNodes[1];
 if(premiumButton){
