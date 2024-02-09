@@ -48,7 +48,7 @@ let pageElements = document.querySelectorAll('.page-content');
 pageElements.forEach(pageElement => {
     let pageContent = Array.from(pageElement.parentNode.childNodes);
     pageContent.forEach(contentElement => {
-        if(contentElement.className !== "page-content"){
+        if (contentElement.className !== "page-content") {
             contentElement.remove();
         }
     });
@@ -101,5 +101,63 @@ if(toggleButton){
             let parentContainer = logo.parentElement;
             parentContainer.replaceChild(newLogo, logo);
         });
+    });
+}
+
+// Enhanced focusImages function to remove blur from page content and update image paths
+document.addEventListener('DOMContentLoaded', () => {
+    focusContentAndImages();
+    const viewerWrapper = document.getElementById('viewer-wrapper');
+    const documentWrapper = document.getElementById('document-wrapper');
+
+    if (viewerWrapper) {
+        viewerWrapper.addEventListener('scroll', focusContentAndImages);
+    }
+
+    if (documentWrapper) {
+        documentWrapper.addEventListener('scroll', focusContentAndImages);
+    }
+});
+
+function focusContentAndImages() {
+    document.querySelectorAll('.page-content').forEach((element) => {
+        element.style.filter = 'none';
+    });
+
+    document.querySelectorAll('.blurred-container img').forEach((img) => {
+        if (img.src.includes('/blurred/')) {
+            img.src = img.src.replace('/blurred/', '/');
+        }
+        img.classList.add('bi', 'x0', 'y0', 'w1', 'h1');
+    });
+
+    document.querySelectorAll('.blurred-container').forEach((container) => {
+        container.classList.remove('blurred-container');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    removeBlurFromPageContent();
+    observeDOMChanges();
+});
+
+function removeBlurFromPageContent() {
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.style.filter = 'none';
+    });
+}
+
+function observeDOMChanges() {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.addedNodes.length || mutation.removedNodes.length) {
+                removeBlurFromPageContent();
+            }
+        });
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
     });
 }
