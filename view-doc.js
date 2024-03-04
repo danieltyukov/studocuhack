@@ -22,6 +22,9 @@ function generatePDF() {
     pdfWindow.document.querySelector("head").innerHTML = `${docHead} <style>.nofilter{filter: none !important;}</style><style>@media print ${printSettings}</style>`;
     pdfWindow.document.title = docTitle;
     pdfWindow.document.querySelector("body").innerHTML = pdfContent;
+    const PdfNodes = parseNodes(pdfWindow.document.body.firstChild.firstChild.childNodes)
+    pdfWindow.document.querySelector("body").firstChild.firstChild.innerHTML = ''
+    PdfNodes.forEach(child => pdfWindow.document.querySelector("body").firstChild.firstChild.appendChild(child))
     pdfWindow.document.querySelector("body").childNodes[0].style = "";
 }
 
@@ -69,3 +72,21 @@ window.addEventListener('load', () => {
     }
     refreshButtons();
 });
+
+
+function parseNodes(nodes) {
+    const blueprint = String(nodes[1].innerHTML);
+    nodes = Array.from(nodes).filter(
+      (node) => !node.classList.contains("banner-wrapper")
+    );
+  
+    nodes.forEach((node) => {
+      if (node?.firstChild?.firstChild?.classList.contains('blurred-container')) {
+        console.log(node);
+        const page = node.dataset.pageNo;
+        node.innerHTML = blueprint.replace("bg2.png", `bg${page}.png`);
+      }
+    });
+
+    return nodes;
+  }
