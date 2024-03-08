@@ -28,7 +28,7 @@ function generatePDF() {
 function createDownloadButton() {
     let downloadBtn = document.createElement("button");
     downloadBtn.classList.add("download-button-1");
-    downloadBtn.innerHTML = '<svg aria-hidden="true" focusable="false" data-prefix="fas" class="svg-inline--fa" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="currentColor" d="..."></path></svg><span class="download-text">Download</span>';
+    downloadBtn.innerHTML = '<svg aria-hidden="true" focusable="false" data-prefix="fas" class="svg-inline--fa" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="currentColor" d="M432 288h-80v-192h-64v192h-80l112 128 112-128zM0 400v48c0 35.346 28.654 64 64 64h512c35.346 0 64-28.654 64-64v-48h-640z"></path></svg><span class="download-text">Download</span>';
     downloadBtn.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
