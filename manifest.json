@@ -2,7 +2,7 @@
   "manifest_version": 3,
  
   "name": "StudocuHack",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Chrome/Firefox Extension for Free Premium Studocu/Studeersnel",
   "icons": { 
     "16": "images/16.png",
