@@ -5,3 +5,11 @@ window.addEventListener("load", () => {
       specificDiv.remove();
   }
 });
+
+// Remove additional specific undesired div
+window.addEventListener("load", () => {
+  const additionalDiv = document.querySelector('._3273140306b6');
+  if (additionalDiv) {
+      additionalDiv.remove();
+  }
+});
