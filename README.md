@@ -6,6 +6,9 @@
 
 Studocuhack is a chrome/firefox extension for www.studocu.com and www.studeersnel.nl to get free premium features
 
+! WHILE RESEARCH IS ONGOING TO RESOLVE ONGOING ISSUES PLEASE SEE A TEMPORARY WAY TO BYPASS THE ISSUES AND GET ALL FEATURES ! 
+SEE: https://github.com/danieltyukov/studocuhack/issues/19
+
 ## Features:
   
     -Removal of Premium Banner
