@@ -1,17 +1,24 @@
 {
   "manifest_version": 3,
- 
+
   "name": "StudocuHack",
   "version": "2.4.1",
   "description": "Chrome/Firefox Extension for Free Premium Studocu/Studeersnel",
-  "icons": { 
+  "icons": {
     "16": "images/16.png",
     "48": "images/48.png",
-    "128": "images/128.png" },
- 
-  "content_scripts": [{
-    "js": ["update-inter.js", "view-doc.js", "remove-previewBanner.js"],
-    "css": ["style.css"],
-    "matches": ["https://www.studocu.com/*", "https://www.studeersnel.nl/*"]
-  }]
+    "128": "images/128.png"
+  },
+
+  "content_scripts": [
+    {
+      "js": ["update-inter.js", "view-doc.js", "remove-previewBanner.js"],
+      "css": ["style.css"],
+      "matches": [
+        "https://www.studocu.com/*",
+        "https://www.studeersnel.nl/*",
+        "https://www.studocu.vn/*"
+      ]
+    }
+  ]
 }
