@@ -4,7 +4,6 @@ function generatePDF() {
         el.style.display = 'block';
     });
 
-    
     const docHead = document.querySelector("head").innerHTML;
     const docTitle = document.querySelector("h1").innerHTML;
     const pageNodes = document.querySelector('#page-container').childNodes;
