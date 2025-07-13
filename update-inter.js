@@ -59,7 +59,7 @@ pageElements.forEach(pageElement => {
 let logos = document.querySelectorAll('[aria-label="StudeerSnel Logo"]' || '[aria-label="StuDocu Logo"]');
 logos.forEach(logo => {
     let newLogo = document.createElement('img');
-    newLogo.src = "https://github.com/danieltyukov/studocuhack/assets/60662998/841574e5-d6cf-4ea9-975a-bcda51bf9240";
+    newLogo.src = "https://github.com/user-attachments/assets/e18a8463-b4f8-4f59-bbe0-520ee1ded527";
     newLogo.width = '90';
     newLogo.height = '60';
 
@@ -93,7 +93,7 @@ if(toggleButton){
         let logos = document.querySelectorAll('[aria-label="StudeerSnel Logo"]' || '[aria-label="StuDocu Logo"]');
         logos.forEach(logo => {
             let newLogo = document.createElement('img');
-            newLogo.src = "https://github.com/danieltyukov/studocuhack/assets/60662998/841574e5-d6cf-4ea9-975a-bcda51bf9240";
+            newLogo.src = "https://github.com/user-attachments/assets/e18a8463-b4f8-4f59-bbe0-520ee1ded527";
             newLogo.width = '90';
             newLogo.height = '60';
 
