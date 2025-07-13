@@ -96,3 +96,33 @@ body .nofilter {
         display: block;
     }
 }
+
+/* Hide premium banners and preview restrictions */
+[class*="PremiumBannerBlobWrapper"],
+[class*="PremiumBannerHeader"],
+[class*="PremiumBannerSubHeader"],
+[class*="PremiumBannerBenefitsList"],
+[class*="PremiumBannerButtons"],
+[data-test-selector="modal-document-viewer-preview-message"],
+[data-test-selector="preview-banner-upgrade-first-cta"],
+[data-test-selector="preview-banner-upload-second-cta"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Legacy selectors for older versions */
+._95f5f1767857,
+._3273140306b6 {
+    display: none !important;
+}
+
+/* Hide any element containing premium/preview text */
+*[class*="preview"]:not(.preview-allowed),
+*[class*="Premium"]:not(.premium-allowed),
+*[class*="premium"]:not(.premium-allowed) {
+    display: none !important;
+}
