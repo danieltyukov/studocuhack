@@ -1,7 +1,15 @@
+/* Core blur removal */
 body .nofilter {
     filter: unset !important;
 }
 
+/* Force remove blur from blurred page wrappers (CSS modules with dynamic hashes) */
+.page-content[class*="blurred"] {
+    filter: none !important;
+    user-select: auto !important;
+}
+
+/* Download button styles */
 .download-button-1, .download-button-2, .github-button {
     background: inherit;
     border-radius: 3px;
@@ -103,19 +111,9 @@ body .nofilter {
     flex-shrink: 0;
 }
 
-/* Style for image logos to ensure visibility on light backgrounds */
-img[src*="logo"], img[src*="icon"], .logo {
-    background-color: #2a2a2a;
-    padding: 8px;
-    border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Alternative selector for PNG images that might be logos */
-img[src$=".png"]:not([src*="avatar"]):not([src*="profile"]) {
-    background-color: #2a2a2a;
-    padding: 6px;
-    border-radius: 4px;
+/* Style for the custom StudocuHack logo replacement */
+.studocuhack-logo-replaced {
+    cursor: pointer;
 }
 
 @media (max-width: 600px) {
@@ -123,13 +121,13 @@ img[src$=".png"]:not([src*="avatar"]):not([src*="profile"]) {
         margin-left: 5px;
         display: none;
     }
-    
+
     .download-button-1 {
         min-width: 44px;
         padding: 12px;
         justify-content: center;
     }
-    
+
     .download-button-1 svg {
         width: 18px;
         height: 18px;
@@ -142,12 +140,14 @@ img[src$=".png"]:not([src*="avatar"]):not([src*="profile"]) {
     }
 }
 
-/* Hide premium banners and preview restrictions */
+/* Hide premium banners and preview restrictions - specific selectors */
 [class*="PremiumBannerBlobWrapper"],
 [class*="PremiumBannerHeader"],
 [class*="PremiumBannerSubHeader"],
 [class*="PremiumBannerBenefitsList"],
 [class*="PremiumBannerButtons"],
+[class*="InlineBanner_inline-banner"],
+[class*="PremiumPageClarificationBanner"],
 [data-test-selector="modal-document-viewer-preview-message"],
 [data-test-selector="preview-banner-upgrade-first-cta"],
 [data-test-selector="preview-banner-upload-second-cta"] {
@@ -165,9 +165,7 @@ img[src$=".png"]:not([src*="avatar"]):not([src*="profile"]) {
     display: none !important;
 }
 
-/* Hide any element containing premium/preview text */
-*[class*="preview"]:not(.preview-allowed),
-*[class*="Premium"]:not(.premium-allowed),
-*[class*="premium"]:not(.premium-allowed) {
+/* Banner wrapper */
+.banner-wrapper {
     display: none !important;
 }
