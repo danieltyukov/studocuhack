@@ -14,6 +14,21 @@
         '.banner-wrapper',
         '._95f5f1767857',
         '._3273140306b6',
+        // Premium badge/tag/label selectors
+        '[class*="PremiumBadge"]',
+        '[class*="premium-badge"]',
+        '[class*="premiumBadge"]',
+        '[class*="PremiumLabel"]',
+        '[class*="premiumLabel"]',
+        '[class*="premium-label"]',
+        '[class*="PremiumTag"]',
+        '[class*="premiumTag"]',
+        '[class*="premium-tag"]',
+        '[class*="premium_tag"]',
+        '[class*="premium_badge"]',
+        '[class*="PremiumIcon"]',
+        '[class*="premiumIcon"]',
+        '[class*="premium-icon"]',
     ];
 
     function removeAll() {

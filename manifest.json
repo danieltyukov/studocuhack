@@ -2,12 +2,23 @@
   "manifest_version": 3,
 
   "name": "StudocuHack",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Chrome/Firefox Extension for Free Premium Studocu/Studeersnel",
   "icons": {
     "16": "images/16.png",
     "48": "images/48.png",
     "128": "images/128.png"
+  },
+
+  "host_permissions": [
+    "https://doc-assets.studocu.com/*"
+  ],
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "studocuhack@danieltyukov",
+      "strict_min_version": "109.0"
+    }
   },
 
   "web_accessible_resources": [

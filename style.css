@@ -1,15 +1,108 @@
-/* Core blur removal */
+/* ========== Core blur removal ========== */
+
+/* Universal nofilter override */
 body .nofilter {
-    filter: unset !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
 }
 
 /* Force remove blur from blurred page wrappers (CSS modules with dynamic hashes) */
-.page-content[class*="blurred"] {
+.page-content[class*="blurred"],
+.page-content[class*="Blurred"],
+.pf[class*="blurred"],
+.pf[class*="Blurred"] {
     filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
     user-select: auto !important;
+    -webkit-user-select: auto !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
 }
 
-/* Download button styles */
+/* Force remove blur from all page wrapper elements */
+.pf.nofilter,
+.pf {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+}
+
+/* Force all page content visible and unblurred */
+.page-content,
+.page-content.nofilter {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    user-select: auto !important;
+    -webkit-user-select: auto !important;
+    pointer-events: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+    color: inherit !important;
+}
+
+/* Force images inside pages to be fully visible */
+.pf img,
+.page-content img {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+}
+
+/* Remove blur from blurred image wrapper (Studocu's component) */
+[class*="blurred-image-wrapper"],
+[class*="BlurredImage"],
+[class*="blurred-page"],
+[class*="BlurredPage"] {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Remove backdrop-filter from any overlay in the document viewer */
+[class*="Viewer_document"] [class*="overlay"],
+[class*="Viewer_document"] [class*="Overlay"],
+#viewer-wrapper [class*="overlay"],
+#viewer-wrapper [class*="Overlay"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: transparent !important;
+    display: none !important;
+}
+
+/* Prevent any pseudo-element overlays on page elements */
+.pf::before,
+.pf::after,
+.page-content::before,
+.page-content::after,
+[class*="blurred"]::before,
+[class*="blurred"]::after,
+[class*="Blurred"]::before,
+[class*="Blurred"]::after {
+    display: none !important;
+    content: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* ========== Download button styles ========== */
 .download-button-1, .download-button-2, .github-button {
     background: inherit;
     border-radius: 3px;
@@ -21,27 +114,32 @@ body .nofilter {
 }
 
 .download-button-1 {
-    background-color: #2cc302;
-    display: inline-flex;
+    background: #4D8BF5;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 28px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
     align-items: center;
     justify-content: center;
-    line-height: 1.4286;
-    margin-right: 20px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    border: none;
+    gap: 8px;
+    margin: 8px auto;
+    width: fit-content;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(77, 139, 245, 0.3);
     cursor: pointer;
+    transition: all 0.2s ease;
     text-decoration: none;
-    font-weight: 500;
-    font-size: 14px;
-    min-width: 120px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .download-button-1:hover {
-    background-color: #259f02;
+    background: #3a7be0;
+    box-shadow: 0 4px 12px rgba(77, 139, 245, 0.4);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .download-button-2 {
@@ -100,7 +198,7 @@ body .nofilter {
 }
 
 .download-text {
-    margin-left: 8px;
+    margin-left: 0;
     font-weight: 500;
 }
 
@@ -114,23 +212,33 @@ body .nofilter {
 /* Style for the custom StudocuHack logo replacement */
 .studocuhack-logo-replaced {
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+
+.studocuhack-logo-replaced svg {
+    flex-shrink: 0;
 }
 
 @media (max-width: 600px) {
+    /* Hide the full text logo on small screens, keep only the icon */
+    .studocuhack-logo-replaced > span {
+        display: none !important;
+    }
+
     .download-text {
         margin-left: 5px;
         display: none;
     }
 
     .download-button-1 {
-        min-width: 44px;
-        padding: 12px;
-        justify-content: center;
+        padding: 10px 20px;
+        font-size: 13px;
     }
 
     .download-button-1 svg {
-        width: 18px;
-        height: 18px;
+        width: 14px;
+        height: 14px;
     }
 }
 
@@ -140,7 +248,7 @@ body .nofilter {
     }
 }
 
-/* Hide premium banners and preview restrictions - specific selectors */
+/* ========== Hide premium banners and preview restrictions ========== */
 [class*="PremiumBannerBlobWrapper"],
 [class*="PremiumBannerHeader"],
 [class*="PremiumBannerSubHeader"],
@@ -148,6 +256,8 @@ body .nofilter {
 [class*="PremiumBannerButtons"],
 [class*="InlineBanner_inline-banner"],
 [class*="PremiumPageClarificationBanner"],
+[class*="premium-banner-wrapper"],
+[class*="ViewerContainer_premium"],
 [data-test-selector="modal-document-viewer-preview-message"],
 [data-test-selector="preview-banner-upgrade-first-cta"],
 [data-test-selector="preview-banner-upload-second-cta"] {
@@ -157,6 +267,13 @@ body .nofilter {
     height: 0 !important;
     width: 0 !important;
     overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Hide Studocu's native download buttons (Scarica/Download) */
+[data-test-selector="document-viewer-download-button-topbar"]:not(.download-button-1) {
+    display: none !important;
+    visibility: hidden !important;
 }
 
 /* Legacy selectors for older versions */
@@ -167,5 +284,39 @@ body .nofilter {
 
 /* Banner wrapper */
 .banner-wrapper {
+    display: none !important;
+}
+
+/* ========== Hide premium badge/tag/label elements ========== */
+[class*="PremiumBadge"],
+[class*="premium-badge"],
+[class*="PremiumLabel"],
+[class*="PremiumTag"],
+[class*="premium_tag"],
+[class*="premium_badge"],
+[class*="premiumBadge"],
+[class*="premiumLabel"],
+[class*="premiumTag"],
+[class*="premium-label"],
+[class*="premium-tag"],
+[class*="PremiumIcon"],
+[class*="premiumIcon"],
+[class*="premium-icon"],
+[data-test-selector*="premium-badge"],
+[data-test-selector*="premium-tag"],
+[data-test-selector*="premium-label"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+}
+
+/* ========== Modal overlay hiding ========== */
+#modal-overlay {
     display: none !important;
 }
