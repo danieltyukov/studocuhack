@@ -320,3 +320,32 @@ body .nofilter {
 #modal-overlay {
     display: none !important;
 }
+
+/* ========== Hide ads (Refinery89 / Google Publisher Tag / Adagio) ========== */
+[class*="AdsContainer"],
+r89-standalone,
+[id^="r89-"],
+[id*="r89-"],
+iframe[id^="google_ads_iframe"],
+div[id^="google_ads_iframe"],
+[id^="div-gpt-ad"],
+[id*="gpt-ad"],
+[id*="adagio"],
+[class*="adagio"],
+[class*="Advertisement"],
+[class*="advertisement"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+/* ========== Hide the AI "Ask a question about this document" toolbar ========== */
+/* (includes the Mock exam / Summary / Quiz pills, which live in the same wrapper) */
+[class*="AIToolbar"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}

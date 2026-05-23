@@ -10,15 +10,20 @@ Studocuhack is a chrome/firefox extension for www.studocu.com and www.studeersne
   
     -Removal of Premium Banner
     -Bypassing Blur
-    -Downloading Documents
+    -Downloading Documents (full text + figures, all pages)
+    -Ad removal
+    -Removal of the "Ask a question" AI toolbar
 
 ## Document Download:
   
-    1) For documents exceeding 20 pages, gradually scroll to the bottom to ensure all images are fully loaded (Rapid scrolling may cause some images not to load)
-    
-    2) Click the 'Download' button to open a document preview in a separate tab
-    
-    3) In the new tab, use the Ctrl + P shortcut to access the print dialog. Choose 'Save as PDF' to download the document
+    1) Open the document and click the 'Download' button
+
+    2) A preview opens in the same tab and automatically loads every page
+       (you'll see "Capturing pages X / N" then "Embedding images X / N").
+       No manual scrolling needed.
+
+    3) When all pages have loaded, click 'Print / Save as PDF' (or press Ctrl + P)
+       and choose 'Save as PDF' to download the complete document
 
 [DOWNLOAD ZIP/XPI FILE FROM HERE](https://github.com/danieltyukov/studocuhack/releases)
 

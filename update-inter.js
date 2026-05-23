@@ -42,6 +42,48 @@
         '[data-test-selector*="premium-label"]',
     ];
 
+    // ========== Ad & AI-Toolbar Selectors ==========
+    // Ads on Studeersnel/Studocu are served via Refinery89 (r89) wrappers,
+    // Google Publisher Tag (GPT) iframes, and Adagio. The "Ask a question
+    // about this document" box + Mock exam/Summary/Quiz pills are the AIToolbar.
+    const AD_SELECTORS = [
+        '[class*="AdsContainer"]',
+        'r89-standalone',
+        '[id^="r89-"]',
+        '[id*="r89-"]',
+        'iframe[id^="google_ads_iframe"]',
+        'div[id^="google_ads_iframe"]',
+        '[id^="div-gpt-ad"]',
+        '[id*="gpt-ad"]',
+        '[id*="adagio"]',
+        '[class*="adagio"]',
+        '[class*="Advertisement"]',
+        '[class*="advertisement"]',
+    ];
+
+    const AI_TOOLBAR_SELECTORS = [
+        '[class*="AIToolbar"]',
+    ];
+
+    function removeAdsAndAI() {
+        AD_SELECTORS.forEach(selector => {
+            try {
+                document.querySelectorAll(selector).forEach(el => {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('visibility', 'hidden', 'important');
+                });
+            } catch(e) {}
+        });
+        AI_TOOLBAR_SELECTORS.forEach(selector => {
+            try {
+                document.querySelectorAll(selector).forEach(el => {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('visibility', 'hidden', 'important');
+                });
+            } catch(e) {}
+        });
+    }
+
     // ========== Document Access Data (cached) ==========
     let _docAccessData = null;
 
@@ -590,6 +632,7 @@
             removeBlur();
             removePremiumBadges();
             removeStudocuDownloadButtons();
+            removeAdsAndAI();
         }, 50);
     }
 
@@ -600,6 +643,7 @@
         removePremiumBadges();
         removeStudocuDownloadButtons();
         removeRecommendations();
+        removeAdsAndAI();
         updateLogos();
         addVersionButton();
         patchReactBlurState();
