@@ -13,6 +13,11 @@
 # to the GitHub release). Use --channel=listed instead to publish a public AMO page.
 set -euo pipefail
 cd "$(dirname "$0")"
+# Load credentials from a file kept OUTSIDE the repo so they are never committed
+# and never printed. Create ~/.studocuhack-amo.env with two lines:
+#   export WEB_EXT_API_KEY='user:XXXXXXX:NNN'
+#   export WEB_EXT_API_SECRET='xxxxxxxxxxxxxxxx'
+[ -f "$HOME/.studocuhack-amo.env" ] && . "$HOME/.studocuhack-amo.env"
 : "${WEB_EXT_API_KEY:?set WEB_EXT_API_KEY (AMO JWT issuer) first}"
 : "${WEB_EXT_API_SECRET:?set WEB_EXT_API_SECRET (AMO JWT secret) first}"
 npx --yes web-ext sign \
