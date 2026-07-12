@@ -87,6 +87,35 @@
     // ========== Document Access Data (cached) ==========
     let _docAccessData = null;
 
+    const DOC_ASSETS = 'https://doc-assets.studocu.com/';
+
+    // Studocu signs asset URLs with a query string held in
+    // documentAccess.signedQueryParams. The KEY it lives under varies per
+    // document, and the value is not always a plain string:
+    //   - scanned/image docs:    { global }                         (one wildcard string)
+    //   - native pdf2htmlEX docs: { html, css, png, blurredPage, pages }
+    // `png`/`global` are wildcard strings authorizing /html/bg{hex}.png. `pages`
+    // is an ARRAY of { pageNumber, signedQueryParams } (one signed param per
+    // text-bearing page), so it must never be concatenated into a URL as-is - that
+    // is what produced the "bg8.png[object Object]" 403s. pickParam therefore only
+    // ever returns a string.
+    //
+    // Verified against live docs (2026-07): the only page assets the server will
+    // serve to us are
+    //   - /html/bg{hex}.png            <- png | global  (full content on scanned
+    //                                     docs; a near-blank figure layer on text docs)
+    //   - /html/{objectKey}{hex}.page  <- per-page `pages` param (the real text
+    //                                     layer; 200 for accessible pages, 403 for
+    //                                     gated premium pages)
+    // The clear raster /html/pages/page{n}.webp is 403 for premium pages, and only
+    // the useless pre-blurred /html/pages/blurred/* is served - so we do NOT rely
+    // on a clear-raster swap.
+    function pickParam(sp, keys) {
+        if (!sp) return '';
+        for (const k of keys) { if (typeof sp[k] === 'string' && sp[k]) return sp[k]; }
+        return '';
+    }
+
     function getDocumentAccessData() {
         if (_docAccessData) return _docAccessData;
         try {
@@ -96,12 +125,25 @@
             const da = data.props?.pageProps?.documentAccess;
             if (da && da.objectKey && da.signedQueryParams) {
                 const doc = data.props?.pageProps?.document;
+                const sp = da.signedQueryParams;
+
+                // Map each text-bearing page number to its own signed param.
+                const pageParams = {};
+                if (Array.isArray(sp.pages)) {
+                    sp.pages.forEach(p => {
+                        if (p && p.pageNumber && typeof p.signedQueryParams === 'string') {
+                            pageParams[p.pageNumber] = p.signedQueryParams;
+                        }
+                    });
+                }
+
                 _docAccessData = {
                     objectKey: da.objectKey,
-                    pngParams: da.signedQueryParams.png || '',
-                    blurredPageParams: da.signedQueryParams.blurredPage || '',
+                    bgParams: pickParam(sp, ['png', 'global']),
+                    pageParams: pageParams,
+                    blurredParams: pickParam(sp, ['blurredPage', 'global']),
                     hasBlurredPages: da.hasBlurredPages || false,
-                    pageCount: doc ? (doc.pageCount || 0) : 0,
+                    pageCount: doc ? (doc.numberOfPages || doc.pageCount || 0) : 0,
                 };
                 return _docAccessData;
             }
@@ -109,149 +151,238 @@
         return null;
     }
 
+    // pdf2htmlEX figure-layer background. HEX page number, png/global param.
+    function bgImageUrl(a, pageNum) {
+        if (!a.bgParams) return '';
+        return DOC_ASSETS + a.objectKey + '/html/bg' + pageNum.toString(16) + '.png' + a.bgParams;
+    }
+
+    // pdf2htmlEX per-page text fragment: /html/{objectKey}{hex}.page, signed per
+    // page. Returns '' when this page has no signed text entry (e.g. image docs, or
+    // an image-only page). HEX page number.
+    function pageTextUrl(a, pageNum) {
+        const param = a.pageParams[pageNum];
+        if (!param) return '';
+        return DOC_ASSETS + a.objectKey + '/html/' + a.objectKey + pageNum.toString(16) + '.page' + param;
+    }
+
     // ========== Lazy Load & Image Fix ==========
+    // Studocu's React viewer lazy-loads page backgrounds and UNMOUNTS pages that
+    // scroll far out of view. So a premium page usually sits in the DOM either as
+    // an empty `.pf` (no <img> at all) or as an <img loading="lazy"> that never
+    // fetched because it is offscreen. Both render as the "blank page" users
+    // report (issues #56/#57). We repair every page by pointing it at the
+    // reconstructed full-resolution hex URL and forcing an eager fetch. Pages the
+    // server refuses (403) are left untouched and retried later.
 
-    let _lazyLoadDone = false;
+    // Convert a blurred asset URL to its clear sibling, keeping the same signed
+    // param (already authorized for /html/pages/*). Returns null if not blurred.
+    function deblurUrl(url) {
+        if (!url || url.indexOf('/blurred/') === -1) return null;
+        return url.replace('/pages/blurred/', '/pages/').replace('/blurred/', '/');
+    }
 
-    function triggerLazyLoadAndFixImages() {
-        if (_lazyLoadDone) return;
-        const accessData = getDocumentAccessData();
-        if (!accessData || !accessData.pngParams) return;
+    // Point an <img> at the first candidate URL that successfully loads.
+    function setSrcFromCandidates(img, candidates) {
+        let i = 0;
+        (function tryNext() {
+            if (i >= candidates.length) return;
+            const url = candidates[i++];
+            if (!url) return tryNext();
+            img.onerror = tryNext;
+            img.onload = function() { img.onerror = null; };
+            img.src = url;
+        })();
+    }
 
-        const pfs = document.querySelectorAll('.pf');
-        if (pfs.length === 0) return;
-        _lazyLoadDone = true;
-
-        console.log('StudocuHack: Triggering lazy load for ' + pfs.length + ' pages');
-
-        // Step 1: Scroll through preview pages to trigger lazy loading
-        let scrollIdx = 0;
-        const previewEnd = Math.min(7, pfs.length); // preview pages are typically 1-7
-
-        function scrollNext() {
-            if (scrollIdx >= previewEnd) {
-                // After scrolling through preview pages, fix images
-                setTimeout(fixAllPageImages, 1500);
-                return;
-            }
-            pfs[scrollIdx].scrollIntoView({ behavior: 'instant' });
-            scrollIdx++;
-            setTimeout(scrollNext, 300);
+    // Make an existing background <img> show clear, full content now.
+    function forceEagerImg(img, candidates) {
+        img.loading = 'eager';
+        img.style.filter = 'none';
+        img.style.opacity = '1';
+        img.style.visibility = 'visible';
+        // Case 1: a baked-in-blur raster -> swap to its clear sibling first,
+        // then fall back to reconstructed candidates. A blurred image loads fine
+        // (naturalWidth > 0), so this must run regardless of load state.
+        const cur = img.getAttribute('src') || '';
+        const clear = deblurUrl(cur);
+        if (clear && !img.dataset.shUnblurred) {
+            img.dataset.shUnblurred = '1';
+            img.removeAttribute('srcset');
+            setSrcFromCandidates(img, [clear].concat(candidates));
+            return;
         }
-
-        // Save current scroll position to restore later
-        const scrollContainer = document.getElementById('viewer-wrapper') ||
-                                document.getElementById('document-wrapper') ||
-                                document.scrollingElement || document.documentElement;
-        const savedScrollTop = scrollContainer.scrollTop;
-
-        scrollNext();
-
-        function fixAllPageImages() {
-            // Restore scroll position
-            scrollContainer.scrollTop = savedScrollTop;
-
-            const pngBase = 'https://doc-assets.studocu.com/' +
-                accessData.objectKey + '/html/bg';
-            const pngSuffix = '.png' + accessData.pngParams;
-
-            pfs.forEach((pf, idx) => {
-                const pageNum = idx + 1;
-                const imgs = pf.querySelectorAll('img');
-                const hasText = pf.querySelectorAll('span').length > 0;
-                const hasContent = pf.innerHTML.length > 300;
-
-                // Fix preview pages with lazy images that didn't load
-                if (imgs.length > 0) {
-                    imgs.forEach(img => {
-                        if (img.naturalWidth === 0 && !img.complete) {
-                            // Force eager loading
-                            img.loading = 'eager';
-                            const currentSrc = img.src;
-                            if (currentSrc && currentSrc.includes('/html/bg')) {
-                                // Re-trigger load
-                                img.src = '';
-                                img.src = currentSrc;
-                            } else {
-                                // Construct proper URL using hex page number
-                                img.src = pngBase + pageNum.toString(16) + pngSuffix;
-                            }
-                            img.dataset.shFixed = 'true';
-                        }
-                    });
-                }
-
-                // For empty pages (beyond preview), inject image if accessible
-                if (!hasContent && imgs.length === 0) {
-                    injectPageImage(pf, pageNum, pngBase, pngSuffix);
-                }
-            });
-
-            console.log('StudocuHack: Image fix complete');
+        // Case 2: already showing a real image -> nothing to do.
+        if (img.complete && img.naturalWidth > 0) return;
+        // Case 3: a lazy/placeholder image that hasn't fetched (naturalWidth 0).
+        // Force a fresh, high-priority load - clearing src first guarantees a
+        // refetch even when the URL is unchanged. Prefer the img's own page asset,
+        // else our reconstructed canonical URL. Bounded so the periodic re-runs
+        // can't thrash a genuinely gated page (which 403s every time).
+        const attempts = +(img.dataset.shForced || 0);
+        if (attempts >= 3) return;
+        img.dataset.shForced = attempts + 1;
+        const target = (cur && cur.indexOf('/html/bg') !== -1) ? cur : (candidates[0] || cur);
+        if (target) {
+            img.removeAttribute('srcset');
+            img.removeAttribute('data-src');
+            img.src = '';
+            img.src = target;
         }
     }
 
-    function injectPageImage(pf, pageNum, pngBase, pngSuffix) {
-        // Test if the image is accessible before injecting
-        const testImg = new Image();
-        const hexNum = pageNum.toString(16);
-        const imgUrl = pngBase + hexNum + pngSuffix;
-
-        testImg.onload = function() {
-            // Image is accessible - inject it into the page
-            // Create the page structure matching Studocu's pdf2htmlEX format
-            const pageContent = pf.querySelector('.page-content') ||
-                                pf.querySelector('[class*="page-content"]');
-
-            if (pageContent) {
-                // Clear existing empty content
-                pageContent.innerHTML = '';
-                const img = document.createElement('img');
-                img.src = imgUrl;
-                img.className = 'bi x0 y0 w1 h1';
-                img.alt = '';
-                img.style.cssText = 'width:100%;height:auto;opacity:1;filter:none;visibility:visible;';
-                img.loading = 'eager';
-                img.dataset.shInjected = 'true';
-                pageContent.appendChild(img);
-                pageContent.style.display = 'block';
-                pageContent.style.visibility = 'visible';
-            } else {
-                // No page-content wrapper, create one
-                const wrapper = document.createElement('div');
-                wrapper.className = 'page-content nofilter';
-                wrapper.style.cssText = 'display:block;visibility:visible;filter:none;opacity:1;';
-                const img = document.createElement('img');
-                img.src = imgUrl;
-                img.className = 'bi x0 y0 w1 h1';
-                img.alt = '';
-                img.style.cssText = 'width:100%;height:auto;opacity:1;filter:none;visibility:visible;';
-                img.loading = 'eager';
-                img.dataset.shInjected = 'true';
-                wrapper.appendChild(img);
-
-                // Clear empty placeholder content
-                const existingChildren = pf.querySelectorAll('div');
-                existingChildren.forEach(child => {
-                    if (child.innerHTML.trim().length < 50) {
-                        child.remove();
-                    }
-                });
-                pf.appendChild(wrapper);
+    // Inject a background into a `.pf` the virtual scroller has not mounted. We
+    // test-load candidates via a detached Image so access-gated pages never
+    // leave a broken <img> behind; we give up after a few misses.
+    function injectPageImage(pf, candidates) {
+        if (pf.querySelector('img')) return;               // already has an image
+        if (pf.dataset.shInjecting) return;                // fetch already in flight
+        if ((+(pf.dataset.shFail || 0)) >= 3) return;      // repeatedly gated - stop
+        pf.dataset.shInjecting = '1';
+        let i = 0;
+        (function tryNext() {
+            if (i >= candidates.length) {
+                pf.dataset.shInjecting = '';
+                pf.dataset.shFail = (+(pf.dataset.shFail || 0)) + 1;
+                return;
             }
+            const url = candidates[i++];
+            const img = new Image();
+            img.loading = 'eager';
+            img.onload = function() {
+                pf.dataset.shInjecting = '';
+                if (!pf.querySelector('img')) {
+                    img.className = 'bi x0 y0 w1 h1';
+                    img.alt = '';
+                    img.dataset.shInjectedImg = '1';
+                    img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;' +
+                        'opacity:1;filter:none;visibility:visible;';
+                    pf.style.filter = 'none';
+                    pf.style.opacity = '1';
+                    pf.appendChild(img);
+                }
+            };
+            img.onerror = tryNext;
+            img.src = url;
+        })();
+    }
 
-            pf.style.display = '';
-            pf.style.visibility = 'visible';
-            pf.style.opacity = '1';
-            console.log('StudocuHack: Injected image for page ' + pageNum);
-        };
+    // A pdf2htmlEX .page fragment is positioned text with inline styles only. Strip
+    // active content (scripts, frames, event handlers, javascript: URLs) before we
+    // insert it, so a tampered CDN response can't run code in the studocu.com origin.
+    function sanitizePageHtml(html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('script, iframe, object, embed, link').forEach(el => el.remove());
+        doc.querySelectorAll('*').forEach(el => {
+            Array.from(el.attributes).forEach(attr => {
+                const name = attr.name.toLowerCase();
+                if (name.startsWith('on')) el.removeAttribute(attr.name);
+                else if ((name === 'src' || name === 'href') && /^\s*javascript:/i.test(attr.value)) {
+                    el.removeAttribute(attr.name);
+                }
+            });
+        });
+        return doc.body.innerHTML;
+    }
 
-        testImg.onerror = function() {
-            // Image not accessible (server restriction for this page)
-            // Leave the page as-is
-        };
+    // Recover the real text layer for a blank page by fetching its .page fragment
+    // and rendering it in place (the pdf2htmlEX stylesheet is already on the page,
+    // so fonts/positioning apply automatically). Only accessible pages return 200;
+    // gated premium pages 403 and are left for the background-image fallback.
+    function injectPageText(a, pf, pageNum) {
+        const url = pageTextUrl(a, pageNum);
+        if (!url) return;
+        if (pf.dataset.shTextTried) return;
+        pf.dataset.shTextTried = '1';
+        fetch(url, { credentials: 'omit' })
+            .then(r => (r.ok ? r.text() : null))
+            .then(html => {
+                if (html && html.indexOf('<span') !== -1 && pf.querySelectorAll('span').length <= 3) {
+                    pf.innerHTML = sanitizePageHtml(html);
+                    pf.style.filter = 'none';
+                    pf.style.opacity = '1';
+                    pf.classList.add('nofilter');
+                }
+            })
+            .catch(() => {});
+    }
 
-        testImg.src = imgUrl;
+    // Repair every page on the live site. Mounted pages get their background
+    // force-loaded/unblurred; pages the virtual scroller left blank get their real
+    // text layer fetched (when the server serves it) plus the reconstructed
+    // background image (full content on scanned docs, harmless blank on text docs).
+    function ensureAllPagesLoaded() {
+        const a = getDocumentAccessData();
+        if (!a) return;
+        document.querySelectorAll('.pf').forEach(function(pf, idx) {
+            const pageNum = idx + 1;
+            const bgUrl = bgImageUrl(a, pageNum);
+            const candidates = bgUrl ? [bgUrl] : [];
+            // Reconcile duplicates: if the viewer has since mounted its own loaded
+            // image beside the fallback we injected earlier, drop ours.
+            const imgs = pf.querySelectorAll('img');
+            if (imgs.length > 1) {
+                const ours = pf.querySelector('img[data-sh-injected-img]');
+                const real = Array.prototype.find.call(imgs, function(im) {
+                    return !im.dataset.shInjectedImg && im.complete && im.naturalWidth > 0;
+                });
+                if (ours && real) ours.remove();
+            }
+            const img = pf.querySelector('img');
+            if (img) { forceEagerImg(img, candidates); return; }
+            // No image mounted. If the page already shows real text, leave it.
+            if (pf.querySelectorAll('span').length > 3) return;
+            injectPageText(a, pf, pageNum);
+            if (candidates.length) injectPageImage(pf, candidates);
+        });
+    }
+
+    // One-time pass that scrolls the whole document so the viewer lazily fetches
+    // and renders EVERY page. Premium text pages are only requested by the viewer
+    // (with fresh per-page signed URLs) when scrolled into view - a static fetch of
+    // the __NEXT_DATA__ page params 403s. Once each page is loaded, removeBlur and
+    // ensureAllPagesLoaded reveal and complete it. We restore the reader's scroll
+    // position afterwards. This is what turns a document full of blank premium
+    // placeholders into a fully readable one without any manual scrolling.
+    let _primed = false;
+    function primeAllPages() {
+        if (_primed) return;
+        const pfs = document.querySelectorAll('.pf');
+        if (pfs.length === 0) return;
+        // Only prime when there is something to reveal: a premium doc, or pages
+        // that are still blank placeholders (no text and no loaded image).
+        const a = getDocumentAccessData();
+        const hasBlank = Array.prototype.some.call(pfs, function(pf) {
+            const img = pf.querySelector('img');
+            return pf.querySelectorAll('span').length <= 3 && !(img && img.complete && img.naturalWidth > 0);
+        });
+        if (!(a && a.hasBlurredPages) && !hasBlank) return;
+        _primed = true;
+
+        const scroller = document.getElementById('viewer-wrapper') ||
+                         document.getElementById('document-wrapper') ||
+                         document.scrollingElement || document.documentElement;
+        const savedTop = scroller ? scroller.scrollTop : 0;
+        // Cap the auto-scroll so we never hijack the viewport for too long on very
+        // large documents; the rest load as the reader scrolls, and the Download
+        // button captures every page regardless.
+        const limit = Math.min(pfs.length, 50);
+        if (pfs.length > limit) {
+            console.log('StudocuHack: priming first ' + limit + ' of ' + pfs.length +
+                ' pages; the rest load on scroll (Download still captures all).');
+        }
+        let i = 0;
+        (function step() {
+            if (i >= limit) {
+                if (scroller) scroller.scrollTop = savedTop;
+                // Final sweep once everything has had a chance to render.
+                setTimeout(function() { removeBlur(); ensureAllPagesLoaded(); }, 400);
+                return;
+            }
+            try { pfs[i].scrollIntoView({ block: 'center' }); } catch (e) {}
+            i++;
+            setTimeout(step, 140);
+        })();
     }
 
     // ========== Core Functions ==========
@@ -269,57 +400,31 @@
     }
 
     function unblurImages() {
-        // Swap server-side blurred images for clear versions
-        // Studocu serves pre-blurred images from /pages/blurred/pageN.webp
-        // The clear versions exist at /html/bgN.png with the 'png' signed params
-        const accessData = getDocumentAccessData();
-        if (!accessData || !accessData.pngParams) return;
-
+        // Swap every baked-in-blur raster for its clear sibling, reusing the
+        // signed param already on the blurred URL (it authorizes /html/pages/*).
+        // This is the reliable path: no page-number or param reconstruction, so
+        // it is immune to the hex/decimal and per-document param-key pitfalls.
         document.querySelectorAll('.pf img').forEach(img => {
-            // Skip images that have already been swapped
             if (img.dataset.shUnblurred) return;
-
-            const src = img.src || img.getAttribute('src') || '';
-            if (src.includes('/pages/blurred/') || src.includes('/blurred/page')) {
-                // Extract page number from blurred URL pattern: blurred/page3.webp
-                const match = src.match(/page(\d+)\./);
-                if (match) {
-                    const pageNum = parseInt(match[1]);
-                    const clearUrl = 'https://doc-assets.studocu.com/' +
-                        accessData.objectKey + '/html/bg' + pageNum + '.png' +
-                        accessData.pngParams;
-
-                    // Test if clear URL loads before swapping
-                    const testImg = new Image();
-                    testImg.onload = function() {
-                        img.src = clearUrl;
+            ['src', 'data-src'].forEach(attr => {
+                const clear = deblurUrl(img.getAttribute(attr));
+                if (clear) {
+                    img.setAttribute(attr, clear);
+                    img.dataset.shUnblurred = '1';
+                    if (attr === 'src') {
+                        img.removeAttribute('srcset');
+                        img.loading = 'eager';
                         img.style.filter = 'none';
                         img.style.opacity = '1';
-                        img.dataset.shUnblurred = 'true';
-                    };
-                    testImg.onerror = function() {
-                        // Clear URL failed - still remove CSS blur effects
-                        img.style.filter = 'none';
-                        img.style.opacity = '1';
-                    };
-                    testImg.src = clearUrl;
+                        img.style.visibility = 'visible';
+                    }
                 }
-            }
-        });
-
-        // Also handle lazy-loaded images via srcset or data-src
-        document.querySelectorAll('.pf img[data-src*="blurred"], .pf img[srcset*="blurred"]').forEach(img => {
-            if (img.dataset.shUnblurred) return;
-            const dataSrc = img.dataset.src || '';
-            const match = dataSrc.match(/page(\d+)\./);
-            if (match) {
-                const pageNum = parseInt(match[1]);
-                const clearUrl = 'https://doc-assets.studocu.com/' +
-                    accessData.objectKey + '/html/bg' + pageNum + '.png' +
-                    accessData.pngParams;
-                img.dataset.src = clearUrl;
-                img.removeAttribute('srcset');
-                img.dataset.shUnblurred = 'true';
+            });
+            // A srcset can also carry the blurred URL.
+            const ss = img.getAttribute('srcset');
+            if (ss && ss.indexOf('/blurred/') !== -1) {
+                img.setAttribute('srcset', ss.replace(/\/pages\/blurred\//g, '/pages/').replace(/\/blurred\//g, '/'));
+                img.dataset.shUnblurred = '1';
             }
         });
     }
@@ -630,6 +735,7 @@
             debounceTimer = null;
             removeBanners();
             removeBlur();
+            ensureAllPagesLoaded();
             removePremiumBadges();
             removeStudocuDownloadButtons();
             removeAdsAndAI();
@@ -639,6 +745,7 @@
     function runAll() {
         removeBanners();
         removeBlur();
+        ensureAllPagesLoaded();
         removePremiumButton();
         removePremiumBadges();
         removeStudocuDownloadButtons();
@@ -664,6 +771,11 @@
 
     // Run on load
     window.addEventListener('load', runAll);
+
+    // Prime the whole document once the viewer has settled, so every page (incl.
+    // premium ones the viewer only fetches on scroll) loads and is revealed.
+    setTimeout(primeAllPages, 1800);
+    window.addEventListener('load', () => setTimeout(primeAllPages, 1800));
 
     // Observe DOM changes for dynamically loaded content
     const observer = new MutationObserver(mutations => {
@@ -726,6 +838,7 @@
         scrollDebounce = setTimeout(() => {
             scrollDebounce = null;
             removeBlur();
+            ensureAllPagesLoaded();
             patchReactBlurState();
         }, 100);
     };
@@ -756,6 +869,7 @@
     let periodicCount = 0;
     const periodicCheck = setInterval(() => {
         removeBlur();
+        ensureAllPagesLoaded();
         patchReactBlurState();
         periodicCount++;
         if (periodicCount >= 15) {
@@ -763,6 +877,7 @@
             // Switch to slower interval
             setInterval(() => {
                 removeBlur();
+                ensureAllPagesLoaded();
                 patchReactBlurState();
             }, 5000);
         }

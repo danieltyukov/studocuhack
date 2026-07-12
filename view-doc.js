@@ -29,28 +29,43 @@
             : (document.title || 'document');
     }
 
+    // Convert a baked-in-blur raster URL to its clear sibling (keeps its param).
+    function deblurUrl(url) {
+        if (!url || url.indexOf('/blurred/') === -1) return null;
+        return url.replace('/pages/blurred/', '/pages/').replace('/blurred/', '/');
+    }
+
     // Resolve the full-resolution page-image URL pattern. Page images are
     // HEX-numbered: .../html/bg{hexPageNum}.png{signedParams}. We reconstruct
     // these ourselves so we never depend on the low-res thumbnail the viewer
     // may have lazy-loaded for a given page.
+    // Resolve the background-image URL pattern. The signing key varies per document
+    // ({ html, css, png, blurredPage, pages } or just { global }); `png`/`global`
+    // are wildcard strings for /html/bg{HEX}.png. `pages` is an array (per-page
+    // signed params), so it must never be treated as a bg param string. Verified
+    // live: the clear full-page raster /html/pages/page{n}.webp is 403 for premium
+    // pages, so we don't reconstruct it - the download clones what the live page
+    // already rendered (real text spans + loaded images) and only upgrades the bg
+    // figure layer to full resolution.
     function getImagePattern() {
         try {
             var nd = JSON.parse(document.querySelector('#__NEXT_DATA__').textContent);
             var da = nd.props.pageProps.documentAccess;
-            if (da && da.objectKey && da.signedQueryParams && da.signedQueryParams.png) {
-                return {
-                    prefix: 'https://doc-assets.studocu.com/' + da.objectKey + '/html/bg',
-                    suffix: '.png' + da.signedQueryParams.png
-                };
+            var sp = (da && da.signedQueryParams) || {};
+            var base = da && da.objectKey ? 'https://doc-assets.studocu.com/' + da.objectKey : null;
+            var bgParam = (typeof sp.png === 'string' && sp.png) ||
+                          (typeof sp.global === 'string' && sp.global) || '';
+            if (base && bgParam) {
+                return { bgPrefix: base + '/html/bg', bgSuffix: '.png' + bgParam };
             }
         } catch (e) {}
-        // Fallback: derive from a full-resolution image already in the DOM.
+        // Fallback: derive the bg pattern from a full-resolution image in the DOM.
         var imgs = document.querySelectorAll('.pf img');
         for (var i = 0; i < imgs.length; i++) {
             var s = imgs[i].src || '';
             if (s.indexOf('/bg') !== -1 && s.indexOf('doc-assets') !== -1 && imgs[i].naturalWidth > 600) {
                 var m = s.match(/(.*?\/bg)[0-9a-f]+(\.png\?.*)/i);
-                if (m) return { prefix: m[1], suffix: m[2] };
+                if (m) return { bgPrefix: m[1], bgSuffix: m[2] };
             }
         }
         return null;
@@ -198,14 +213,22 @@
                     e.setAttribute('style', st.replace(/display:\s*none/ig, 'display:block'));
                 }
             });
-            // Force the page background image to full resolution (page idx+1, hex).
-            if (pattern) {
-                var bg = pf.querySelector('img.bi') || pf.querySelector('img');
-                if (bg) {
-                    bg.setAttribute('src', pattern.prefix + (idx + 1).toString(16) + pattern.suffix);
-                    bg.removeAttribute('srcset');
-                    bg.removeAttribute('data-src');
+            // Upgrade the page background to its full-resolution figure layer
+            // (/html/bg{HEX}.png). The text layer, when present, comes from the
+            // cloned spans, so this only needs to fix the raster. Any leftover
+            // baked-in-blur URL is de-blurred to its clear sibling first.
+            if (pattern && pattern.bgSuffix) {
+                var img = pf.querySelector('img.bi') || pf.querySelector('img');
+                var cur = img ? (img.getAttribute('src') || '') : '';
+                var clear = deblurUrl(cur);
+                if (!img) {
+                    img = document.createElement('img');
+                    img.className = 'bi x0 y0 w1 h1';
+                    (pf.querySelector('.pc') || pf).appendChild(img);
                 }
+                img.setAttribute('src', clear || (pattern.bgPrefix + (idx + 1).toString(16) + pattern.bgSuffix));
+                img.removeAttribute('srcset');
+                img.removeAttribute('data-src');
             }
             container.appendChild(pf);
         });
