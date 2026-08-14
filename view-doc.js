@@ -55,8 +55,30 @@
             var base = da && da.objectKey ? 'https://doc-assets.studocu.com/' + da.objectKey : null;
             var bgParam = (typeof sp.png === 'string' && sp.png) ||
                           (typeof sp.global === 'string' && sp.global) || '';
+            // Which pages ship a signed text layer. A page missing from this map on a
+            // document that has one is premium-locked: its text is never sent to the
+            // browser, so its background must NOT be swapped for the figure-only
+            // bg{hex}.png, which would print a blank sheet (issue #58).
+            var pageParams = {};
+            if (Array.isArray(sp.pages)) {
+                sp.pages.forEach(function (pg) {
+                    if (pg && pg.pageNumber && typeof pg.signedQueryParams === 'string') {
+                        pageParams[pg.pageNumber] = pg.signedQueryParams;
+                    }
+                });
+            }
+            var blurParam = (typeof sp.blurredPage === 'string' && sp.blurredPage) ||
+                            (typeof sp.global === 'string' && sp.global) || '';
             if (base && bgParam) {
-                return { bgPrefix: base + '/html/bg', bgSuffix: '.png' + bgParam };
+                return {
+                    bgPrefix: base + '/html/bg', bgSuffix: '.png' + bgParam,
+                    blurPrefix: blurParam ? base + '/html/pages/blurred/page' : '',
+                    blurSuffix: '.webp' + blurParam,
+                    pageParams: pageParams,
+                    // Presence of the key, not its length: `pages: []` means every
+                    // page is gated, not that the document is a scanned one.
+                    hasTextLayer: Array.isArray(sp.pages),
+                };
             }
         } catch (e) {}
         // Fallback: derive the bg pattern from a full-resolution image in the DOM.
@@ -215,21 +237,50 @@
             });
             // Upgrade the page background to its full-resolution figure layer
             // (/html/bg{HEX}.png). The text layer, when present, comes from the
-            // cloned spans, so this only needs to fix the raster. Any leftover
-            // baked-in-blur URL is de-blurred to its clear sibling first.
+            // cloned spans, so this only needs to fix the raster.
+            var pageNum = idx + 1;
+            var gated = !!(pattern && pattern.hasTextLayer && !pattern.pageParams[pageNum]);
             if (pattern && pattern.bgSuffix) {
                 var img = pf.querySelector('img.bi') || pf.querySelector('img');
                 var cur = img ? (img.getAttribute('src') || '') : '';
-                var clear = deblurUrl(cur);
                 if (!img) {
                     img = document.createElement('img');
                     img.className = 'bi x0 y0 w1 h1';
                     (pf.querySelector('.pc') || pf).appendChild(img);
                 }
-                img.setAttribute('src', clear || (pattern.bgPrefix + (idx + 1).toString(16) + pattern.bgSuffix));
+                if (gated) {
+                    // Premium-locked: the clear raster and the text layer both 403,
+                    // and bg{hex}.png holds only figure art. Print Studocu's blurred
+                    // preview, which is the sole rendering of this page that exists,
+                    // and label it. Blurred rasters are DECIMAL-numbered.
+                    if (cur.indexOf('/pages/blurred/') === -1 && pattern.blurPrefix) {
+                        img.setAttribute('src', pattern.blurPrefix + pageNum + pattern.blurSuffix);
+                    }
+                    if (!pf.querySelector('[data-sh-gated-note]')) {
+                        var note = document.createElement('div');
+                        note.setAttribute('data-sh-gated-note', String(pageNum));
+                        note.className = 'sh-gated-note';
+                        note.textContent = 'Page ' + pageNum + ' is premium-locked. Studocu does ' +
+                            'not send the text of this page to non-subscribers, so it cannot be unblurred.';
+                        pf.appendChild(note);
+                    }
+                } else {
+                    // Any leftover baked-in-blur URL is de-blurred to its clear
+                    // sibling first; otherwise use the reconstructed figure layer.
+                    var clear = deblurUrl(cur);
+                    img.setAttribute('src', clear || (pattern.bgPrefix + pageNum.toString(16) + pattern.bgSuffix));
+                }
                 img.removeAttribute('srcset');
                 img.removeAttribute('data-src');
             }
+            // The viewer hides a page's `.page-content` while it is scrolled out of
+            // view. The clone must be visible in the printed copy regardless.
+            pf.querySelectorAll('.page-content').forEach(function (pc) {
+                pc.style.setProperty('display', 'block', 'important');
+                pc.style.setProperty('filter', 'none', 'important');
+                pc.style.setProperty('visibility', 'visible', 'important');
+                pc.style.setProperty('opacity', '1', 'important');
+            });
             container.appendChild(pf);
         });
         return container;

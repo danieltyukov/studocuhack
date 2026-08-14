@@ -14,6 +14,20 @@ Studocuhack is a chrome/firefox extension for www.studocu.com and www.studeersne
     -Ad removal
     -Removal of the "Ask a question" AI toolbar
 
+## What it cannot do:
+
+Studocu renders a native PDF as two separate layers per page: a background image
+holding the figures (rules, table borders, coloured boxes) and a separate HTML text
+layer holding the words. The two are authorised separately, and on some premium
+documents Studocu never sends the text layer of the locked pages to the browser at
+all. No extension can un-blur those pages, because the words are not on your
+computer in any form.
+
+Pages in that state keep Studocu's blurred preview and are labelled
+"premium-locked", in the viewer and in the download, so you can tell them apart
+from a page that genuinely failed to load. Every page whose text Studocu does send
+is unlocked in full. Open the browser console to see the exact list.
+
 ## Document Download:
   
     1) Open the document and click the 'Download' button

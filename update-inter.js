@@ -100,16 +100,29 @@
     // is what produced the "bg8.png[object Object]" 403s. pickParam therefore only
     // ever returns a string.
     //
-    // Verified against live docs (2026-07): the only page assets the server will
-    // serve to us are
-    //   - /html/bg{hex}.png            <- png | global  (full content on scanned
-    //                                     docs; a near-blank figure layer on text docs)
-    //   - /html/{objectKey}{hex}.page  <- per-page `pages` param (the real text
-    //                                     layer; 200 for accessible pages, 403 for
-    //                                     gated premium pages)
-    // The clear raster /html/pages/page{n}.webp is 403 for premium pages, and only
-    // the useless pre-blurred /html/pages/blurred/* is served - so we do NOT rely
-    // on a clear-raster swap.
+    // HOW A PAGE IS BUILT (this is the crux of issue #58). Studocu renders native
+    // PDFs with pdf2htmlEX in split-page mode, so every page is TWO layers:
+    //   - /html/bg{hex}.png            the FIGURE layer: rules, table borders,
+    //                                  bullet glyphs, coloured boxes. No text.
+    //   - /html/{objectKey}{hex}.page  the TEXT layer: positioned <span>s.
+    // The `png` param is a wildcard over *.png, so the figure layer of EVERY page
+    // is fetchable. The text layer is signed per page, and `pages` only ever
+    // contains entries for the non-premium pages.
+    //
+    // Verified live against a 19-page premium doc (2026-08). For a gated page:
+    //   /html/{objectKey}{hex}.page   403 with every param the client holds
+    //                                 (its own key is simply absent from `pages`)
+    //   /html/pages/page{n}.webp      403 (clear raster)
+    //   /html/pages/page{n}.png       404
+    //   /html/{objectKey}.html        200 but an empty 1 KB skeleton of <div class="pf">
+    //   previewTextData.text          covers only the non-premium pages
+    //   /html/pages/blurred/page{n}.webp  200, but a 140x198 thumbnail
+    //   /html/bg{hex}.png             200, ~9 KB of figure art and zero text
+    // So a gated page's text is not served to the client in any form. Falling back
+    // to bg{hex}.png therefore does NOT "recover" the page: it replaces Studocu's
+    // blurred preview with a crisp but completely empty one, which is exactly the
+    // "rebuilt without text" report. isTextGated() below detects those pages so we
+    // present them honestly instead of blanking them.
     function pickParam(sp, keys) {
         if (!sp) return '';
         for (const k of keys) { if (typeof sp[k] === 'string' && sp[k]) return sp[k]; }
@@ -144,6 +157,15 @@
                     blurredParams: pickParam(sp, ['blurredPage', 'global']),
                     hasBlurredPages: da.hasBlurredPages || false,
                     pageCount: doc ? (doc.numberOfPages || doc.pageCount || 0) : 0,
+                    // True when this document keeps its text in separate .page
+                    // fragments, i.e. it is native pdf2htmlEX output and bg{hex}.png
+                    // is only a figure layer. Keyed off the PRESENCE of the `pages`
+                    // key, not its length: a document with every page gated ships
+                    // `pages: []`, and treating that as a scanned document would
+                    // blank the whole thing. Scanned/image documents sign with a
+                    // single `global` wildcard and have no `pages` key at all, and
+                    // there the background image IS the page content.
+                    hasTextLayer: Array.isArray(sp.pages),
                 };
                 return _docAccessData;
             }
@@ -164,6 +186,77 @@
         const param = a.pageParams[pageNum];
         if (!param) return '';
         return DOC_ASSETS + a.objectKey + '/html/' + a.objectKey + pageNum.toString(16) + '.page' + param;
+    }
+
+    // Studocu's own blurred preview raster. NOTE the numbering: backgrounds are
+    // HEX (bg12.png is page 18) but these are DECIMAL (page18.webp).
+    function blurredPageUrl(a, pageNum) {
+        if (!a.blurredParams) return '';
+        return DOC_ASSETS + a.objectKey + '/html/pages/blurred/page' + pageNum + '.webp' + a.blurredParams;
+    }
+
+    // A page is "text-gated" when the document has text layers but this page has no
+    // signed entry for its own. Studocu serves no text for such a page in any form
+    // (see the asset table above), so the figure-only bg{hex}.png must never be
+    // presented as if it were the recovered page.
+    //
+    // Deliberately NOT keyed off hasBlurredPages: patchNextData() rewrites that
+    // flag to false in #__NEXT_DATA__ to stop React re-blurring, which would leave
+    // this predicate depending on whichever of the two ran first. `pages` is never
+    // rewritten, so it is the stable signal.
+    function isTextGated(a, pageNum) {
+        return !!(a.hasTextLayer && !a.pageParams[pageNum]);
+    }
+
+    // Render a gated page honestly: keep Studocu's blurred preview as the page
+    // image (it is the only rendering of the actual text that exists client-side)
+    // and label the page, so a reader is never shown a blank sheet and left
+    // guessing whether the extension failed. Idempotent.
+    function markGatedPage(a, pf, pageNum) {
+        if (pf.querySelector('[data-sh-gated-note]')) return;
+        const blurUrl = blurredPageUrl(a, pageNum);
+        let img = pf.querySelector('img');
+        // The virtual scroller unmounts far-off pages, so a gated page may have no
+        // image at all. Give it Studocu's preview rather than leaving a blank sheet.
+        if (!img && blurUrl) {
+            img = document.createElement('img');
+            img.className = 'bi x0 y0 w1 h1';
+            img.alt = '';
+            img.dataset.shInjectedImg = '1';
+            img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
+            pf.appendChild(img);
+        }
+        // Restore the blurred raster if an earlier pass swapped it for a gated
+        // (403) or textless URL.
+        if (img && blurUrl) {
+            const cur = img.getAttribute('src') || '';
+            if (cur.indexOf('/pages/blurred/') === -1) {
+                img.removeAttribute('srcset');
+                img.setAttribute('src', blurUrl);
+            }
+            img.loading = 'eager';
+            img.style.filter = 'none';
+            img.style.opacity = '1';
+            img.style.visibility = 'visible';
+        }
+        const note = document.createElement('div');
+        note.setAttribute('data-sh-gated-note', String(pageNum));
+        note.className = 'sh-gated-note';
+        note.textContent = 'Page ' + pageNum + ' is premium-locked. Studocu does not send ' +
+            'the text of this page to non-subscribers, so it cannot be unblurred.';
+        pf.appendChild(note);
+    }
+
+    // Report once, so a reader knows exactly which pages could not be recovered
+    // and why, instead of assuming the extension silently broke them.
+    let _gatedReported = false;
+    function reportGatedPages(gated, total) {
+        if (_gatedReported || !gated.length) return;
+        _gatedReported = true;
+        console.log('StudocuHack: ' + (total - gated.length) + ' of ' + total +
+            ' pages fully recovered. Pages ' + gated.join(', ') + ' are premium-locked: ' +
+            'Studocu never sends their text layer to a non-subscriber, so no extension ' +
+            'can un-blur them. See https://github.com/danieltyukov/studocuhack/issues/58');
     }
 
     // ========== Lazy Load & Image Fix ==========
@@ -203,13 +296,16 @@
         img.style.visibility = 'visible';
         // Case 1: a baked-in-blur raster -> swap to its clear sibling first,
         // then fall back to reconstructed candidates. A blurred image loads fine
-        // (naturalWidth > 0), so this must run regardless of load state.
+        // (naturalWidth > 0), so this must run regardless of load state. The
+        // original blurred URL is kept as the LAST candidate: when the clear
+        // sibling is access-gated (403) we must land back on Studocu's preview
+        // rather than on a broken or textless image.
         const cur = img.getAttribute('src') || '';
         const clear = deblurUrl(cur);
         if (clear && !img.dataset.shUnblurred) {
             img.dataset.shUnblurred = '1';
             img.removeAttribute('srcset');
-            setSrcFromCandidates(img, [clear].concat(candidates));
+            setSrcFromCandidates(img, [clear].concat(candidates).concat([cur]));
             return;
         }
         // Case 2: already showing a real image -> nothing to do.
@@ -307,19 +403,35 @@
             .catch(() => {});
     }
 
+    // The pages of the live viewer, excluding the clones our own download overlay
+    // renders (it reuses the `.p2hv` class so the pdf2htmlEX CSS applies). Without
+    // this the page numbering would shift while the overlay is open.
+    function viewerPages() {
+        const all = document.querySelectorAll('.pf');
+        return Array.prototype.filter.call(all, function(pf) {
+            return !pf.closest('#sh-dl-overlay');
+        });
+    }
+
     // Repair every page on the live site. Mounted pages get their background
     // force-loaded/unblurred; pages the virtual scroller left blank get their real
     // text layer fetched (when the server serves it) plus the reconstructed
     // background image (full content on scanned docs, harmless blank on text docs).
+    // Premium-locked pages are exempt: nothing we can fetch contains their text, so
+    // they are labelled rather than overwritten with an empty figure layer.
     function ensureAllPagesLoaded() {
         const a = getDocumentAccessData();
         if (!a) return;
-        document.querySelectorAll('.pf').forEach(function(pf, idx) {
+        const pages = viewerPages();
+        const gated = [];
+        pages.forEach(function(pf, idx) {
             const pageNum = idx + 1;
             const bgUrl = bgImageUrl(a, pageNum);
             const candidates = bgUrl ? [bgUrl] : [];
+
             // Reconcile duplicates: if the viewer has since mounted its own loaded
-            // image beside the fallback we injected earlier, drop ours.
+            // image beside the fallback we injected earlier, drop ours. This runs
+            // before the gated branch below, which injects a fallback of its own.
             const imgs = pf.querySelectorAll('img');
             if (imgs.length > 1) {
                 const ours = pf.querySelector('img[data-sh-injected-img]');
@@ -328,6 +440,15 @@
                 });
                 if (ours && real) ours.remove();
             }
+
+            // Premium-locked page: its text layer does not exist client-side, so
+            // swapping in the figure-only background would blank the page (#58).
+            // Keep Studocu's blurred preview and label it instead.
+            if (isTextGated(a, pageNum)) {
+                gated.push(pageNum);
+                markGatedPage(a, pf, pageNum);
+                return;
+            }
             const img = pf.querySelector('img');
             if (img) { forceEagerImg(img, candidates); return; }
             // No image mounted. If the page already shows real text, leave it.
@@ -335,19 +456,19 @@
             injectPageText(a, pf, pageNum);
             if (candidates.length) injectPageImage(pf, candidates);
         });
+        reportGatedPages(gated, pages.length);
     }
 
     // One-time pass that scrolls the whole document so the viewer lazily fetches
-    // and renders EVERY page. Premium text pages are only requested by the viewer
-    // (with fresh per-page signed URLs) when scrolled into view - a static fetch of
-    // the __NEXT_DATA__ page params 403s. Once each page is loaded, removeBlur and
-    // ensureAllPagesLoaded reveal and complete it. We restore the reader's scroll
-    // position afterwards. This is what turns a document full of blank premium
+    // and renders EVERY page. The viewer only requests a page's assets once it is
+    // scrolled into view, so this is what turns a document full of unmounted
     // placeholders into a fully readable one without any manual scrolling.
+    // Premium-locked pages stay blurred: scrolling to them makes the viewer fetch
+    // their preview raster, which is all the server will ever hand out.
     let _primed = false;
     function primeAllPages() {
         if (_primed) return;
-        const pfs = document.querySelectorAll('.pf');
+        const pfs = viewerPages();
         if (pfs.length === 0) return;
         // Only prime when there is something to reveal: a premium doc, or pages
         // that are still blank placeholders (no text and no loaded image).
@@ -401,25 +522,30 @@
 
     function unblurImages() {
         // Swap every baked-in-blur raster for its clear sibling, reusing the
-        // signed param already on the blurred URL (it authorizes /html/pages/*).
-        // This is the reliable path: no page-number or param reconstruction, so
-        // it is immune to the hex/decimal and per-document param-key pitfalls.
+        // signed param already on the blurred URL. On some documents that param
+        // authorizes /html/pages/* and the swap simply works; on premium documents
+        // it only covers /html/pages/blurred/*, so the clear sibling 403s. We
+        // therefore probe the swap through setSrcFromCandidates with the ORIGINAL
+        // blurred URL as the final fallback, instead of assigning the clear URL
+        // outright and leaving a broken image behind (#58).
         document.querySelectorAll('.pf img').forEach(img => {
             if (img.dataset.shUnblurred) return;
-            ['src', 'data-src'].forEach(attr => {
-                const clear = deblurUrl(img.getAttribute(attr));
-                if (clear) {
-                    img.setAttribute(attr, clear);
-                    img.dataset.shUnblurred = '1';
-                    if (attr === 'src') {
-                        img.removeAttribute('srcset');
-                        img.loading = 'eager';
-                        img.style.filter = 'none';
-                        img.style.opacity = '1';
-                        img.style.visibility = 'visible';
-                    }
-                }
-            });
+            const curSrc = img.getAttribute('src');
+            const clearSrc = deblurUrl(curSrc);
+            if (clearSrc) {
+                img.dataset.shUnblurred = '1';
+                img.removeAttribute('srcset');
+                img.loading = 'eager';
+                img.style.filter = 'none';
+                img.style.opacity = '1';
+                img.style.visibility = 'visible';
+                setSrcFromCandidates(img, [clearSrc, curSrc]);
+            }
+            const clearData = deblurUrl(img.getAttribute('data-src'));
+            if (clearData) {
+                img.setAttribute('data-src', clearData);
+                img.dataset.shUnblurred = '1';
+            }
             // A srcset can also carry the blurred URL.
             const ss = img.getAttribute('srcset');
             if (ss && ss.indexOf('/blurred/') !== -1) {
@@ -664,10 +790,14 @@
 
     function patchNextData() {
         // Patch __NEXT_DATA__ to remove blur flags so any client-side
-        // navigation or hydration doesn't re-apply blur
+        // navigation or hydration doesn't re-apply blur.
         try {
             const nextDataEl = document.querySelector('#__NEXT_DATA__');
             if (!nextDataEl) return;
+            // Read (and cache) the access data from the PRISTINE JSON first: the
+            // patch below clears hasBlurredPages, and reading it back afterwards
+            // would report a premium document as a free one.
+            getDocumentAccessData();
             const data = JSON.parse(nextDataEl.textContent);
             if (data.props?.pageProps?.documentAccess) {
                 data.props.pageProps.documentAccess.hasBlurredPages = false;
