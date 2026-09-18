@@ -22,6 +22,6 @@
   },
   "devDependencies": {
     "jsdom": "^25.0.0",
-    "web-ext": "^8.0.0"
+    "web-ext": "^10.6.0"
   }
 }
