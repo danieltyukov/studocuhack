@@ -1,0 +1,72 @@
+name: Bug report
+description: Something is blurred, blank, missing, or broken.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Before filing, please check you are on the latest release and that the extension is enabled on the site (Firefox needs "Always Allow" per site, see the README).
+
+        Pages labelled "premium-locked" are expected: Studocu does not send their text to the browser, so the extension cannot recover them. See "What it cannot do" in the README before reporting those.
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: Shown in the toolbar popup.
+      placeholder: "2.10.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Brave
+        - Edge
+        - Firefox
+        - Other (say which in the description)
+    validations:
+      required: true
+  - type: dropdown
+    id: site
+    attributes:
+      label: Site
+      options:
+        - www.studocu.com
+        - www.studeersnel.nl
+        - www.studocu.vn
+    validations:
+      required: true
+  - type: dropdown
+    id: doctype
+    attributes:
+      label: Kind of document
+      description: Native PDFs have selectable text; scanned ones are images only.
+      options:
+        - Native PDF (text is selectable)
+        - Scanned / image only
+        - Not sure
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What you see, what you expected, and which pages are affected (all, some, the last ones).
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Open the browser console (F12, Console tab), reload the document, and paste every line that starts with "StudocuHack:". They say which pages were recovered and which were locked.
+      render: text
+  - type: input
+    id: url
+    attributes:
+      label: Document URL
+      description: Optional, but it lets a maintainer reproduce the problem on the same document.
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots are welcome. Drag them into this box.

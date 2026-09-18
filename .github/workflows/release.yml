@@ -1,0 +1,94 @@
+name: Release
+
+# Pushing a tag like v2.11.0 builds the extension, signs the Firefox build
+# through Mozilla when the AMO secrets are configured, and publishes a GitHub
+# release with the matching CHANGELOG section as its notes.
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tag must match the manifest version
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "unexpected tag: $TAG"; exit 1; }
+          v="$(node -p "require('./src/manifest.json').version")"
+          test "v$v" = "$TAG" || { echo "manifest.json is $v but the tag is $TAG"; exit 1; }
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+      - name: Sign the Firefox build (only when AMO secrets are set)
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+        run: |
+          if [ -z "$WEB_EXT_API_KEY" ] || [ -z "$WEB_EXT_API_SECRET" ]; then
+            echo "AMO secrets not configured; publishing the unsigned .xpi."
+            echo "SIGNED=no" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          npx --yes web-ext sign \
+            --source-dir=src \
+            --channel=unlisted \
+            --artifacts-dir=web-ext-artifacts \
+            --api-key="$WEB_EXT_API_KEY" \
+            --api-secret="$WEB_EXT_API_SECRET"
+          cp web-ext-artifacts/*.xpi "dist/studocuhack-v${VERSION}.xpi"
+          echo "SIGNED=yes" >> "$GITHUB_ENV"
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          # Everything between "## [VERSION]" and the next "## [" heading.
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "No CHANGELOG section for $VERSION; add one before tagging." > notes.md
+          fi
+          {
+            echo
+            echo "## Install"
+            echo
+            echo "**Chrome / Brave / Edge**: download \`studocuhack-v${VERSION}.zip\`, extract it, open \`chrome://extensions\`, enable Developer mode, click Load unpacked and select the extracted folder."
+            echo
+            if [ "$SIGNED" = "yes" ]; then
+              echo "**Firefox**: download \`studocuhack-v${VERSION}.xpi\` (signed by Mozilla), open \`about:addons\`, gear icon, Install Add-on From File."
+            else
+              echo "**Firefox**: \`studocuhack-v${VERSION}.xpi\` is unsigned in this release; release Firefox will refuse it until a signed build is attached. Use Developer Edition or Nightly with \`xpinstall.signatures.required\` off, or load it temporarily through \`about:debugging\`."
+            fi
+            echo
+            echo "See the README for the full instructions."
+          } >> notes.md
+          cat notes.md
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$TAG" \
+            --title "StudocuHack $TAG" \
+            --notes-file notes.md \
+            "dist/studocuhack-v${VERSION}.zip" \
+            "dist/studocuhack-v${VERSION}.xpi"

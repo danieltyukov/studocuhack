@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "StudocuHack",
+  "version": "2.10.0",
+  "description": "Removes the premium blur, banners and ads on Studocu and Studeersnel, and downloads documents as PDF.",
+  "homepage_url": "https://github.com/danieltyukov/studocuhack",
+  "icons": {
+    "16": "images/16.png",
+    "48": "images/48.png",
+    "128": "images/128.png"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://doc-assets.studocu.com/*"
+  ],
+  "action": {
+    "default_title": "StudocuHack settings",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "images/16.png",
+      "48": "images/48.png",
+      "128": "images/128.png"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "studocuhack@danieltyukov",
+      "strict_min_version": "109.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["images/*"],
+      "matches": [
+        "https://www.studocu.com/*",
+        "https://www.studeersnel.nl/*",
+        "https://www.studocu.vn/*"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.studocu.com/*",
+        "https://www.studeersnel.nl/*",
+        "https://www.studocu.vn/*"
+      ],
+      "css": ["content/style.css"],
+      "js": [
+        "content/common.js",
+        "content/cleanup.js",
+        "content/pages.js",
+        "content/download.js",
+        "content/main.js"
+      ]
+    }
+  ]
+}

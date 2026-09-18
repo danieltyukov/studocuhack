@@ -1,0 +1,523 @@
+/* StudocuHack stylesheet.
+ *
+ * Applied before the content scripts run, so nothing premium-related flashes.
+ * Feature toggles are expressed as attributes on <html> set by
+ * SH.applySettingsToDocument() in content/common.js:
+ *   data-sh-ads="show"       keep ads
+ *   data-sh-ai="show"        keep the AI toolbar
+ *   data-sh-download="off"   keep Studocu's own download button
+ * A rule whose feature can be switched off is written as
+ * html:not([data-sh-x="..."]) so the default (attribute absent) is "hidden".
+ *
+ * When you add a selector here, add it to SELECTORS in content/common.js too.
+ */
+
+/* ========== Core blur removal ========== */
+
+body .nofilter {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+}
+
+/* Blurred page wrappers (CSS modules with dynamic hashes) */
+.page-content[class*="blurred"],
+.page-content[class*="Blurred"],
+.pf[class*="blurred"],
+.pf[class*="Blurred"] {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    user-select: auto !important;
+    -webkit-user-select: auto !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+}
+
+.pf.nofilter,
+.pf {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+}
+
+.page-content,
+.page-content.nofilter {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    user-select: auto !important;
+    -webkit-user-select: auto !important;
+    pointer-events: auto !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+    color: inherit !important;
+}
+
+.pf img,
+.page-content img {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+}
+
+[class*="blurred-image-wrapper"],
+[class*="BlurredImage"],
+[class*="blurred-page"],
+[class*="BlurredPage"] {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Overlays with backdrop-filter inside the viewer */
+[class*="Viewer_document"] [class*="overlay"],
+[class*="Viewer_document"] [class*="Overlay"],
+#viewer-wrapper [class*="overlay"],
+#viewer-wrapper [class*="Overlay"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: transparent !important;
+    display: none !important;
+}
+
+/* Pseudo-element overlays on page elements */
+.pf::before,
+.pf::after,
+.page-content::before,
+.page-content::after,
+[class*="blurred"]::before,
+[class*="blurred"]::after,
+[class*="Blurred"]::before,
+[class*="Blurred"]::after {
+    display: none !important;
+    content: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* ========== Premium banners and preview restrictions ========== */
+
+[class*="PremiumBannerBlobWrapper"],
+[class*="PremiumBannerHeader"],
+[class*="PremiumBannerSubHeader"],
+[class*="PremiumBannerBenefitsList"],
+[class*="PremiumBannerButtons"],
+[class*="InlineBanner_inline-banner"],
+[class*="PremiumPageClarificationBanner"],
+[class*="premium-banner-wrapper"],
+[class*="ViewerContainer_premium"],
+[data-test-selector="modal-document-viewer-preview-message"],
+[data-test-selector="preview-banner-upgrade-first-cta"],
+[data-test-selector="preview-banner-upload-second-cta"],
+.banner-wrapper,
+._95f5f1767857,
+._3273140306b6 {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+#modal-overlay {
+    display: none !important;
+}
+
+/* ========== Premium badges, tags and labels ========== */
+
+[class*="PremiumBadge"],
+[class*="premium-badge"],
+[class*="PremiumLabel"],
+[class*="PremiumTag"],
+[class*="premium_tag"],
+[class*="premium_badge"],
+[class*="premiumBadge"],
+[class*="premiumLabel"],
+[class*="premiumTag"],
+[class*="premium-label"],
+[class*="premium-tag"],
+[class*="PremiumIcon"],
+[class*="premiumIcon"],
+[class*="premium-icon"],
+[data-test-selector*="premium-badge"],
+[data-test-selector*="premium-tag"],
+[data-test-selector*="premium-label"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+}
+
+/* ========== Studocu's own download button (leads to the paywall) ========== */
+
+html:not([data-sh-download="off"]) [data-test-selector="document-viewer-download-button-topbar"]:not(.download-button-1) {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* ========== Ads (Refinery89 / Google Publisher Tag / Adagio) ========== */
+
+html:not([data-sh-ads="show"]) [class*="AdsContainer"],
+html:not([data-sh-ads="show"]) r89-standalone,
+html:not([data-sh-ads="show"]) [id^="r89-"],
+html:not([data-sh-ads="show"]) [id*="r89-"],
+html:not([data-sh-ads="show"]) iframe[id^="google_ads_iframe"],
+html:not([data-sh-ads="show"]) div[id^="google_ads_iframe"],
+html:not([data-sh-ads="show"]) [id^="div-gpt-ad"],
+html:not([data-sh-ads="show"]) [id*="gpt-ad"],
+html:not([data-sh-ads="show"]) [id*="adagio"],
+html:not([data-sh-ads="show"]) [class*="adagio"],
+html:not([data-sh-ads="show"]) [class*="Advertisement"],
+html:not([data-sh-ads="show"]) [class*="advertisement"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+/* ========== AI "Ask a question" toolbar (incl. Mock exam / Summary / Quiz) ========== */
+
+html:not([data-sh-ai="show"]) [class*="AIToolbar"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* ========== Download button ========== */
+
+.download-button-1 {
+    background: #4D8BF5;
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 28px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 8px auto;
+    width: fit-content;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(77, 139, 245, 0.3);
+    cursor: pointer;
+    transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+    text-decoration: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.download-button-1:hover {
+    background: #3a7be0;
+    box-shadow: 0 4px 12px rgba(77, 139, 245, 0.4);
+    transform: translateY(-1px);
+}
+
+.download-button-1:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+.download-button-1 .download-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.download-text {
+    margin-left: 0;
+    font-weight: 500;
+}
+
+/* ========== Logo replacement ========== */
+
+.studocuhack-logo-replaced {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+}
+
+.studocuhack-logo-replaced svg {
+    flex-shrink: 0;
+}
+
+.studocuhack-logo-text {
+    margin-left: 6px;
+    font-weight: 800;
+    font-size: 15px;
+    white-space: nowrap;
+}
+
+.studocuhack-logo-accent {
+    color: #4D8BF5;
+}
+
+@media (max-width: 600px) {
+    .studocuhack-logo-text {
+        display: none !important;
+    }
+
+    .download-text {
+        display: none;
+    }
+
+    .download-button-1 {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+}
+
+/* ========== In-page notice (replaces alert()) ========== */
+
+#sh-notice {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translate(-50%, 16px);
+    z-index: 2147483646;
+    max-width: min(520px, 90vw);
+    padding: 12px 18px;
+    border-radius: 8px;
+    background: #1a1a2e;
+    color: #fff;
+    font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+#sh-notice.sh-notice-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+/* ========== Premium-locked page label (issue #58) ========== */
+/* Studocu splits each pdf2htmlEX page into a figure layer (bg{hex}.png) and a
+   separately signed text layer ({objectKey}{hex}.page). For premium pages it
+   signs no text layer, so their words are never sent to the browser. Those
+   pages keep Studocu's blurred preview and carry this label. It sits at the top
+   of the page so the reader learns why it is blurred before scrolling past. */
+
+.sh-gated-note {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 10px 16px !important;
+    background: rgba(26, 26, 46, 0.92) !important;
+    color: #fff !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+    text-align: center !important;
+    border-bottom: 2px solid #4D8BF5 !important;
+    filter: none !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+}
+
+/* ========== Download overlay ========== */
+
+#sh-dl-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    background: #525659;
+    overflow: auto;
+}
+
+#sh-dl-overlay .sh-dl-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 10px 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#sh-dl-overlay .sh-dl-left {
+    min-width: 0;
+}
+
+#sh-dl-overlay .sh-dl-title {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#sh-dl-overlay .sh-dl-meta {
+    font-size: 12px;
+    opacity: .7;
+}
+
+#sh-dl-overlay .sh-dl-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+#sh-dl-overlay .sh-dl-hint {
+    font-size: 12px;
+    opacity: .7;
+    margin-right: 6px;
+}
+
+#sh-dl-overlay .sh-dl-bar button {
+    border: 0;
+    border-radius: 6px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+#sh-dl-overlay .sh-dl-bar button:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+#sh-dl-overlay .sh-dl-print { background: #4D8BF5; color: #fff; }
+#sh-dl-overlay .sh-dl-close { background: #444; color: #fff; }
+
+#sh-dl-overlay .sh-dl-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    height: 78vh;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#sh-dl-overlay .sh-dl-msg { font-size: 15px; }
+#sh-dl-overlay .sh-dl-sub { font-size: 13px; opacity: .7; }
+
+#sh-dl-overlay .sh-dl-progress {
+    width: 320px;
+    max-width: 80vw;
+    height: 10px;
+    background: #33334d;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+#sh-dl-overlay .sh-dl-fill {
+    height: 100%;
+    width: 0;
+    background: #4D8BF5;
+    transition: width .2s;
+}
+
+#sh-dl-overlay .sh-dl-pages .p2hv { margin: 0 auto; }
+
+#sh-dl-overlay .sh-dl-pages .pf {
+    margin: 12px auto !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .4);
+    display: block !important;
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+#sh-dl-overlay .sh-dl-pages .page-content,
+#sh-dl-overlay .sh-dl-pages .pc {
+    display: block !important;
+    visibility: visible !important;
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+#sh-dl-overlay .sh-dl-pages .pf img {
+    filter: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+@media (max-width: 700px) {
+    #sh-dl-overlay .sh-dl-hint { display: none; }
+}
+
+/* ========== Print ========== */
+
+@media print {
+    .p2hv .stopoverlappingourstyleplease {
+        display: block;
+    }
+
+    .sh-gated-note {
+        background: #fff !important;
+        color: #000 !important;
+        border-bottom: 1px solid #000 !important;
+        border-top: 0 !important;
+        font-size: 11px !important;
+        padding: 6px 12px !important;
+    }
+
+    /* Only the overlay prints while it is open. */
+    body.sh-dl-open > *:not(#sh-dl-overlay) { display: none !important; }
+    body.sh-dl-open #sh-notice { display: none !important; }
+    html.sh-dl-open, body.sh-dl-open {
+        background: #fff !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    body.sh-dl-open #sh-dl-overlay {
+        position: static !important;
+        inset: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
+        height: auto !important;
+    }
+    body.sh-dl-open #sh-dl-overlay .sh-dl-bar { display: none !important; }
+    body.sh-dl-open #sh-dl-overlay .sh-dl-pages .pf {
+        margin: 0 !important;
+        box-shadow: none !important;
+        page-break-after: always;
+        break-after: page;
+    }
+    body.sh-dl-open #sh-dl-overlay .sh-dl-pages .pf:last-child { page-break-after: auto; }
+    @page { margin: 0; }
+}

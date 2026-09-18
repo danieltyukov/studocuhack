@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint (web-ext)
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Version in manifest and package.json must match
+        run: |
+          m="$(node -p "require('./src/manifest.json').version")"
+          p="$(node -p "require('./package.json').version")"
+          test "$m" = "$p" || { echo "manifest.json ($m) and package.json ($p) disagree"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studocuhack-build
+          path: dist/*.zip
+          if-no-files-found: error

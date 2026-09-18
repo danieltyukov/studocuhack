@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>StudocuHack</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="head">
+    <img src="../images/48.png" width="28" height="28" alt="">
+    <div>
+      <div class="name">StudocuHack</div>
+      <div class="version" id="version"></div>
+    </div>
+  </header>
+
+  <main>
+    <p class="lead">Blur removal is always on. Everything else can be switched off here.</p>
+
+    <label class="row">
+      <input type="checkbox" data-setting="showDownloadButton">
+      <span>
+        <span class="label">Download button</span>
+        <span class="help">Adds a Download button that saves the whole document as PDF.</span>
+      </span>
+    </label>
+
+    <label class="row">
+      <input type="checkbox" data-setting="autoLoadPages">
+      <span>
+        <span class="label">Load every page on open</span>
+        <span class="help">Scrolls through the document once so all pages render without you scrolling.</span>
+      </span>
+    </label>
+
+    <label class="row">
+      <input type="checkbox" data-setting="hideAds">
+      <span>
+        <span class="label">Hide ads</span>
+      </span>
+    </label>
+
+    <label class="row">
+      <input type="checkbox" data-setting="hideAiToolbar">
+      <span>
+        <span class="label">Hide the AI toolbar</span>
+        <span class="help">The "Ask a question" box and the Mock exam / Summary / Quiz pills.</span>
+      </span>
+    </label>
+
+    <label class="row">
+      <input type="checkbox" data-setting="replaceLogo">
+      <span>
+        <span class="label">Replace the site logo</span>
+      </span>
+    </label>
+
+    <p class="note" id="status">Changes apply the next time a document page loads.</p>
+  </main>
+
+  <footer class="foot">
+    <a href="https://github.com/danieltyukov/studocuhack/issues" target="_blank" rel="noopener">Report a problem</a>
+    <a href="https://github.com/danieltyukov/studocuhack/releases" target="_blank" rel="noopener">Releases</a>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
