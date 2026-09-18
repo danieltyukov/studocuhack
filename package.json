@@ -23,5 +23,8 @@
   "devDependencies": {
     "jsdom": "^25.0.0",
     "web-ext": "^10.6.0"
+  },
+  "overrides": {
+    "image-size": "^2.0.4"
   }
 }
