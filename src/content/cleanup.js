@@ -79,18 +79,18 @@
             }
         });
 
+        // The button's class hash changes between deployments (Button_button,
+        // Button-module-scss-module__…), so it is matched by its localized
+        // label instead; see SELECTORS.nativeDownloadWords.
         const isNativeDownload = function (el) {
-            if (el.classList.contains('download-button-1')) return false;
-            const text = el.textContent.trim().toLowerCase();
-            return text === 'scarica' || text === 'download';
+            if (el.closest('.download-button-1')) return false;
+            return SH.SELECTORS.nativeDownloadWords.test(el.textContent.trim());
         };
-        document.querySelectorAll('button[class*="Button_button"], a[class*="Button_button"]').forEach(function (el) {
+        document.querySelectorAll(
+            'button[class*="Button"], a[class*="Button"], ' +
+            '.hidden-on-mobile button, .hidden-on-mobile a, .hidden-from-tablet button, .hidden-from-tablet a'
+        ).forEach(function (el) {
             if (isNativeDownload(el)) el.remove();
-        });
-        document.querySelectorAll('div.hidden-on-mobile, div.hidden-from-tablet').forEach(function (container) {
-            container.querySelectorAll('button, a').forEach(function (el) {
-                if (isNativeDownload(el)) el.remove();
-            });
         });
     };
 

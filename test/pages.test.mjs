@@ -128,6 +128,22 @@ test('the download overlay clones do not shift the page numbering', () => {
     assert.equal(document.querySelectorAll('#sh-dl-overlay [data-sh-gated-note]').length, 0);
 });
 
+test('injectPageText points the fragment\'s relative figure image at the signed CDN URL', async () => {
+    // Real fragments look like this: the bg reference is relative and hex.
+    const fragment = '<div class="pc pc10 w0 h0"><img class="bi x0 y0 w1 h1" alt="" src="bga.png"/>' +
+        '<span>a</span><span>b</span><span>c</span><span>d</span></div>';
+    const { SH, pfs } = setup(
+        { shape: 'all-free', pageCount: 10, states: { 10: 'empty' } },
+        { fetch: (url) => Promise.resolve({ ok: url.endsWith('10.page?p10=1'), text: () => Promise.resolve(fragment) }) },
+    );
+    SH.pages.ensureAllPagesLoaded();
+    await tick(10);
+    const img = pfs()[9].querySelector('img.bi');
+    assert.ok(img);
+    assert.equal(img.getAttribute('src'), ASSETS + 'bga.png?png=1', 'relative bga.png rewritten to the signed URL');
+    assert.equal(pfs()[9].querySelectorAll('span').length, 4);
+});
+
 test('injectPageText renders a sanitised .page fragment into an empty page', async () => {
     const fragment =
         '<div class="pc"><span>a</span><span>b</span><span>c</span><span>d</span>' +

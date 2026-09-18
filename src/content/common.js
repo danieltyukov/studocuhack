@@ -47,6 +47,8 @@
             '._8690b6fc16a3',
             '._4d5ecd011027',
             '[class*="premium-banner-wrapper"]',
+            '[class*="PremiumBannerWrapper"]',
+            '[class*="premiumBannerWrapper"]',
             '[class*="ViewerContainer_premium"]',
         ],
         premiumBadges: [
@@ -91,6 +93,11 @@
             '[class*="AIToolbar"]',
         ],
         nativeDownloadButton: '[data-test-selector="document-viewer-download-button-topbar"]',
+        // Studocu's own Download button (it opens the paywall) has no stable
+        // attribute any more, so it is matched by its label. The whole trimmed
+        // text must equal one of these, which keeps links like "Download the
+        // app" in the footer alone. Add the word for a new locale here.
+        nativeDownloadWords: /^(download|downloaden|scarica|descargar|t[eé]l[eé]charger|herunterladen|pobierz|baixar|indir|скачать|ladda ner|last ned|lataa|tải xuống|tải về)$/i,
         logos: [
             '[aria-label="StudeerSnel Logo"]',
             '[aria-label="StuDocu Logo"]',
@@ -169,11 +176,12 @@
     //
     //   bg{hex}.png               the FIGURE layer: rules, table borders, bullet
     //                             glyphs, coloured boxes. No text.
-    //   {objectKey}{hex}.page     the TEXT layer: positioned <span>s.
+    //   {objectKey}{n}.page       the TEXT layer: positioned <span>s.
     //   pages/blurred/page{n}.webp  Studocu's blurred preview thumbnail.
     //
-    // Page numbers in bg/.page filenames are HEX (page 18 -> bg12.png); the
-    // blurred previews are DECIMAL (page18.webp).
+    // Only the background images are HEX-numbered (page 18 -> bg12.png, as
+    // pdf2htmlEX writes them). The .page fragments and the blurred previews are
+    // DECIMAL (page 18 -> {objectKey}18.page, page18.webp).
     //
     // The signing key lives in __NEXT_DATA__ under
     // props.pageProps.documentAccess.signedQueryParams, and its shape varies:
@@ -253,11 +261,14 @@
     };
 
     // Per-page text fragment, signed per page. '' when this page has no entry.
+    // DECIMAL page number: pdf2htmlEX names split pages with %d but background
+    // images with %x. Verified live (2026-09): the viewer requests
+    // {objectKey}10.page for page 10 while page 10's background is bga.png.
     SH.pageTextUrl = function (a, pageNum) {
         if (!a) return '';
         const param = a.pageParams[pageNum];
         if (!param) return '';
-        return SH.DOC_ASSETS + a.objectKey + '/html/' + a.objectKey + pageNum.toString(16) + '.page' + param;
+        return SH.DOC_ASSETS + a.objectKey + '/html/' + a.objectKey + pageNum + '.page' + param;
     };
 
     // Studocu's own blurred preview raster. DECIMAL page number.
@@ -308,11 +319,33 @@
         });
     };
 
-    // The element that scrolls the document.
+    // The element that actually scrolls the document. On the current site the
+    // viewer wrappers are as tall as their content and the WINDOW scrolls, so a
+    // wrapper is only chosen when it really overflows; otherwise the auto-load
+    // pass would "restore" a wrapper's scrollTop to 0 and leave the reader
+    // stranded fifty pages down.
     SH.getScroller = function () {
-        return document.getElementById('viewer-wrapper') ||
-            document.getElementById('document-wrapper') ||
-            document.scrollingElement || document.documentElement;
+        const candidates = [document.getElementById('viewer-wrapper'), document.getElementById('document-wrapper')];
+        for (let i = 0; i < candidates.length; i++) {
+            const el = candidates[i];
+            if (!el || el.scrollHeight <= el.clientHeight + 1) continue;
+            const oy = getComputedStyle(el).overflowY;
+            if (oy === 'auto' || oy === 'scroll') return el;
+        }
+        return document.scrollingElement || document.documentElement;
+    };
+
+    // Snapshot and restore the reader's position across a pass that scrolls
+    // the whole document (auto-load, download capture). Both the scroller and
+    // the window are recorded so it works whichever one owns the scroll.
+    SH.saveScroll = function () {
+        const el = SH.getScroller();
+        return { el: el, top: el ? el.scrollTop : 0, y: window.scrollY || 0 };
+    };
+    SH.restoreScroll = function (saved) {
+        if (!saved) return;
+        try { if (saved.el) saved.el.scrollTop = saved.top; } catch (e) { /* detached */ }
+        try { window.scrollTo(0, saved.y); } catch (e) { /* not scrollable */ }
     };
 
     // A page shows real text once it has more than a handful of spans; empty

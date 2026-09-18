@@ -77,14 +77,13 @@
     // page order and restores the scroll position.
     function captureAllPages(onProgress) {
         const pfs = SH.viewerPages();
-        const scroller = SH.getScroller();
-        const savedTop = scroller ? scroller.scrollTop : 0;
+        const saved = SH.saveScroll();
         const captured = [];
         return new Promise(function (resolve) {
             let i = 0;
             (function next() {
                 if (i >= pfs.length) {
-                    if (scroller) scroller.scrollTop = savedTop;
+                    SH.restoreScroll(saved);
                     resolve(captured);
                     return;
                 }
@@ -205,6 +204,38 @@
         return container;
     };
 
+    // Make each printed sheet exactly the size of the page it carries. Without
+    // this the browser prints on its default paper (Letter or A4) and the
+    // pdf2htmlEX page, which has its own fixed pixel size, is scaled onto it
+    // with a blank strip at the bottom. Pages of different sizes get their
+    // own named @page rule, so a landscape page in a portrait document still
+    // prints on a landscape sheet. Returns the CSS it applied ('' if the
+    // pages have no layout yet).
+    download.applyPageSizes = function (container) {
+        const pfs = container.querySelectorAll('.pf');
+        const rules = [];
+        const names = {};
+        pfs.forEach(function (pf) {
+            const r = pf.getBoundingClientRect();
+            const w = Math.round(r.width), h = Math.round(r.height);
+            if (!(w > 0 && h > 0)) return;
+            const key = w + 'x' + h;
+            if (!names[key]) {
+                names[key] = 'sh-page-' + (rules.length + 1);
+                rules.push('@page ' + names[key] + '{size:' + w + 'px ' + h + 'px;margin:0;}');
+            }
+            pf.style.setProperty('page', names[key]);
+        });
+        let style = document.getElementById('sh-dl-page-size');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'sh-dl-page-size';
+            document.head.appendChild(style);
+        }
+        style.textContent = rules.join('');
+        return style.textContent;
+    };
+
     // ------------------------------------------------------------------
     // Overlay UI
     // ------------------------------------------------------------------
@@ -257,6 +288,8 @@
 
         function close() {
             overlay.remove();
+            const sizes = document.getElementById('sh-dl-page-size');
+            if (sizes) sizes.remove();
             document.body.classList.remove('sh-dl-open');
             document.documentElement.classList.remove('sh-dl-open');
             document.removeEventListener('keydown', onKey, true);
@@ -299,6 +332,7 @@
         }).then(function (container) {
             ui.loading.remove();
             ui.pages.appendChild(container);
+            download.applyPageSizes(container);
             ui.printBtn.disabled = false;
             ui.printBtn.focus();
         }).catch(function () {

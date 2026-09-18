@@ -72,9 +72,12 @@ export function createWindow(html, opts = {}) {
     window.fetch = opts.fetch || (() => Promise.reject(new Error('network disabled in tests')));
     window.Element.prototype.scrollIntoView = function () {};
     window.HTMLElement.prototype.scrollIntoView = function () {};
+    // jsdom has no layout; record scrollTo calls instead of "not implemented".
+    const scrollCalls = [];
+    window.scrollTo = (x, y) => { scrollCalls.push([x, y]); };
     window.print = () => { logs.push('print()'); };
 
-    return { dom, window, document: window.document, logs, storageWrites: writes };
+    return { dom, window, document: window.document, logs, storageWrites: writes, scrollCalls };
 }
 
 /** Evaluate the given content scripts (relative to src/) in the window. */

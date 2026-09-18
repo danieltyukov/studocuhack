@@ -6,7 +6,7 @@
 
 A browser extension for [studocu.com](https://www.studocu.com), [studeersnel.nl](https://www.studeersnel.nl) and [studocu.vn](https://www.studocu.vn) that removes the premium blur and upsell chrome from documents and lets you download them as a complete PDF.
 
-Works in Chrome, Brave, Edge and Firefox (Manifest V3). No account, no server, no data collection.
+Works in Chrome, Brave, Edge and Firefox 142 or newer (Manifest V3). No account, no server, no data collection.
 
 ## What it does
 

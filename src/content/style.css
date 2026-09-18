@@ -121,6 +121,8 @@ body .nofilter {
 [class*="InlineBanner_inline-banner"],
 [class*="PremiumPageClarificationBanner"],
 [class*="premium-banner-wrapper"],
+[class*="PremiumBannerWrapper"],
+[class*="premiumBannerWrapper"],
 [class*="ViewerContainer_premium"],
 [data-test-selector="modal-document-viewer-preview-message"],
 [data-test-selector="preview-banner-upgrade-first-cta"],

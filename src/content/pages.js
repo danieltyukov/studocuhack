@@ -154,6 +154,17 @@
             .then(function (html) {
                 if (html && html.indexOf('<span') !== -1 && !SH.hasTextSpans(pf)) {
                     const body = pages.sanitizePageHtml(html);
+                    // The fragment references its figure layer relatively
+                    // (src="bga.png"), which would resolve against the site URL
+                    // and 403. Point it at the signed CDN URL up front.
+                    const bg = SH.bgImageUrl(a, pageNum);
+                    body.querySelectorAll('img').forEach(function (img) {
+                        const s = img.getAttribute('src') || '';
+                        if (bg && /^bg[0-9a-f]+\.png$/i.test(s)) {
+                            img.setAttribute('src', bg);
+                            img.loading = 'eager';
+                        }
+                    });
                     pf.replaceChildren.apply(pf, Array.from(body.childNodes));
                     pf.style.filter = 'none';
                     pf.style.opacity = '1';
@@ -266,8 +277,7 @@
         if (!(a && a.hasBlurredPages) && !hasBlank) return;
         _primed = true;
 
-        const scroller = SH.getScroller();
-        const savedTop = scroller ? scroller.scrollTop : 0;
+        const saved = SH.saveScroll();
         const limit = Math.min(pfs.length, pages.PRIME_LIMIT);
         if (pfs.length > limit) {
             SH.log('priming first ' + limit + ' of ' + pfs.length +
@@ -276,7 +286,7 @@
         let i = 0;
         (function step() {
             if (i >= limit) {
-                if (scroller) scroller.scrollTop = savedTop;
+                SH.restoreScroll(saved);
                 setTimeout(function () { pages.removeBlur(); pages.ensureAllPagesLoaded(); }, 400);
                 return;
             }

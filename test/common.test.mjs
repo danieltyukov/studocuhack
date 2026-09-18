@@ -69,18 +69,24 @@ test('parseDocumentAccess rejects incomplete input', () => {
     assert.equal(SH.parseDocumentAccess({ signedQueryParams: {} }), null);
 });
 
-test('URL builders: bg and .page are hex-numbered, blurred previews are decimal', () => {
+test('URL builders: bg images are hex-numbered, .page fragments and blurred previews are decimal', () => {
     const { SH } = sh();
     const a = SH.parseDocumentAccess({
         objectKey: OBJECT_KEY,
         signedQueryParams: {
             png: '?png=1', blurredPage: '?blur=1',
-            pages: [{ pageNumber: 18, signedQueryParams: '?p18=1' }],
+            pages: [
+                { pageNumber: 10, signedQueryParams: '?p10=1' },
+                { pageNumber: 18, signedQueryParams: '?p18=1' },
+            ],
         },
     });
     assert.equal(SH.bgImageUrl(a, 18), ASSETS + 'bg12.png?png=1');
     assert.equal(SH.bgImageUrl(a, 10), ASSETS + 'bga.png?png=1');
-    assert.equal(SH.pageTextUrl(a, 18), ASSETS + OBJECT_KEY + '12.page?p18=1');
+    // Verified against the viewer's own requests (2026-09): page 10 is
+    // {objectKey}10.page, not {objectKey}a.page.
+    assert.equal(SH.pageTextUrl(a, 10), ASSETS + OBJECT_KEY + '10.page?p10=1');
+    assert.equal(SH.pageTextUrl(a, 18), ASSETS + OBJECT_KEY + '18.page?p18=1');
     assert.equal(SH.pageTextUrl(a, 17), '', 'no signed entry, no URL');
     assert.equal(SH.blurredPageUrl(a, 18), ASSETS + 'pages/blurred/page18.webp?blur=1');
     assert.equal(SH.bgImageUrl({ objectKey: OBJECT_KEY, bgParams: '' }, 1), '');
@@ -139,6 +145,24 @@ test('applySettingsToDocument expresses toggles as attributes on <html>', () => 
     SH.applySettingsToDocument();
     assert.equal(root.getAttribute('data-sh-ads'), 'show');
     assert.equal(root.getAttribute('data-sh-download'), 'off');
+});
+
+test('getScroller falls back to the document when the viewer wrapper does not overflow', () => {
+    // jsdom has no layout, so #viewer-wrapper never overflows: exactly the
+    // live-site situation where the window owns the scroll.
+    const { SH, document } = sh();
+    assert.ok(document.getElementById('viewer-wrapper'));
+    assert.equal(SH.getScroller(), document.scrollingElement || document.documentElement);
+});
+
+test('saveScroll/restoreScroll round-trip the window position', () => {
+    const ctx = createWindow(documentFixture({}));
+    const SH = loadScripts(ctx.window, ['content/common.js']);
+    Object.defineProperty(ctx.window, 'scrollY', { value: 72606, configurable: true });
+    const saved = SH.saveScroll();
+    assert.equal(saved.y, 72606);
+    SH.restoreScroll(saved);
+    assert.deepEqual(ctx.scrollCalls.at(-1), [0, 72606]);
 });
 
 test('viewerPages excludes the download overlay clones', () => {

@@ -61,6 +61,29 @@ test('assembleContainer adds an image to a page that has none and forces hidden 
     assert.equal(pc.style.getPropertyPriority('display'), 'important');
 });
 
+test('applyPageSizes emits one named @page rule per distinct page size and tags the pages', () => {
+    const { SH, document } = setup({ shape: 'all-free', pageCount: 3, states: { 1: 'text', 2: 'text', 3: 'text' } });
+    const container = document.createElement('div');
+    const sizes = [[892, 1262], [892, 1262], [1262, 892]];
+    sizes.forEach(([w, h]) => {
+        const pf = document.createElement('div');
+        pf.className = 'pf';
+        pf.getBoundingClientRect = () => ({ width: w, height: h });
+        container.appendChild(pf);
+    });
+    const css = SH.download.applyPageSizes(container);
+    assert.equal(css, '@page sh-page-1{size:892px 1262px;margin:0;}@page sh-page-2{size:1262px 892px;margin:0;}');
+    const pfs = container.querySelectorAll('.pf');
+    assert.equal(pfs[0].style.getPropertyValue('page'), 'sh-page-1');
+    assert.equal(pfs[1].style.getPropertyValue('page'), 'sh-page-1');
+    assert.equal(pfs[2].style.getPropertyValue('page'), 'sh-page-2', 'landscape page gets its own sheet size');
+    assert.equal(document.getElementById('sh-dl-page-size').textContent, css);
+    // Pages without layout (jsdom default) are skipped and nothing breaks.
+    const empty = document.createElement('div');
+    empty.innerHTML = '<div class="pf"></div>';
+    assert.equal(SH.download.applyPageSizes(empty), '');
+});
+
 test('generatePDF opens the overlay, captures every page and enables printing', async () => {
     const { SH, document, window } = setup(
         { shape: 'all-free', pageCount: 2, states: { 1: 'text', 2: 'text' } },

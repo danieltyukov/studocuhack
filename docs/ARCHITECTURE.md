@@ -19,8 +19,8 @@ Assets live at `https://doc-assets.studocu.com/{objectKey}/html/`. For each page
 
 | Asset | Path | Numbering | Notes |
 | --- | --- | --- | --- |
-| Figure layer | `bg{n}.png` | hex (`bg12.png` is page 18) | Rules, table borders, bullet glyphs, coloured boxes. No text. |
-| Text layer | `{objectKey}{n}.page` | hex | Positioned `<span>`s. Signed per page. |
+| Figure layer | `bg{n}.png` | hex (`bg12.png` is page 18) | Rules, table borders, bullet glyphs, coloured boxes. No text. pdf2htmlEX writes these with `%x`. |
+| Text layer | `{objectKey}{n}.page` | decimal (`{objectKey}18.page` is page 18) | Positioned `<span>`s. Signed per page. Verified against the viewer's own requests; before 2.11.0 the extension built these in hex, so text recovery for pages 10 and up silently 403'd. |
 | Blurred preview | `pages/blurred/page{n}.webp` | decimal | A small thumbnail with the blur baked in. |
 | Clear raster | `pages/page{n}.webp` | decimal | 403 on premium pages. |
 | Stylesheet | `{objectKey}.css` | | Fonts and layout. |
@@ -80,7 +80,9 @@ Studocu is a React app and re-renders pages as you scroll, which puts the blur b
 3. Point each clone's background at the full-resolution `bg{n}.png` (or the clear sibling of a blurred URL). Locked pages keep the blurred preview and get the label.
 4. Fetch every CDN image and replace its `src` with a data URI, six at a time.
 5. Show the result in a fixed overlay in the same tab. The capture runs in the same tab on purpose: a background tab has throttled timers and paused lazy-loading.
-6. `body.sh-dl-open` switches on print rules in `style.css` that hide everything except the overlay and break pages with `break-after: page`. The user prints to PDF.
+6. `body.sh-dl-open` switches on print rules in `style.css` that hide everything except the overlay and break pages with `break-after: page`. `applyPageSizes` measures each page and emits a named `@page` rule per distinct size, so the printed sheets match the document's own page size instead of the browser's default paper. The user prints to PDF.
+
+Both the capture and the auto-load pass save and restore the reader's position through `SH.saveScroll` / `SH.restoreScroll`. On the current site the viewer wrappers are as tall as their content and the window is what scrolls, so `SH.getScroller` only returns a wrapper that really overflows and falls back to `document.scrollingElement` otherwise.
 
 ## Settings
 

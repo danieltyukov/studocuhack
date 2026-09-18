@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-09-18
+
+### Fixed
+
+- Text recovery for pages 10 and up. The per-page `.page` text fragments are numbered in decimal, not hex like the background images; the extension had built them in hex since 2.9.0, so its own fetch for any page past 9 silently returned 403 and those pages only rendered when the viewer happened to fetch them itself. Verified against the viewer's own requests on a 63-page premium document.
+- The reader is no longer left at page 50 after the automatic page-load pass. The site's viewer wrappers do not scroll (the window does), so the saved position was restored to the wrong element. The download capture restores the position the same way.
+- Studocu's own Download button is removed again. Its class hash changed (`Button-module-scss-module__…`) and the match now goes by the button's label in any of the site's languages ("Downloaden", "Scarica", "Télécharger" and so on), while links such as "Download the app" are left alone.
+- Text fragments reference their figure layer relatively (`src="bga.png"`), which resolved against the site URL and 403'd until the next sweep. The reference is rewritten to the signed CDN URL on insertion.
+- Printed PDFs use the document's own page size. Each sheet is sized from the page it carries (named `@page` rules, so mixed orientations work) instead of the browser's default paper, which left a blank strip at the bottom of every A4 page printed on Letter.
+- An empty premium banner wrapper that survived the banner removal is hidden too.
+
 ### Added
 
 - Toolbar popup with settings: the download button, automatic page loading, ad hiding, AI toolbar hiding and the logo replacement can each be switched off. Settings are stored in `chrome.storage.sync`.
@@ -19,7 +30,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - The "could not find the document pages" alert is now an in-page notice.
 - Fetched page text is inserted as sanitised DOM nodes rather than through `innerHTML`.
 - The periodic re-check pauses while the tab is hidden.
-- Manifest declares `data_collection_permissions: none` for Firefox.
+- Manifest declares `data_collection_permissions: none` for Firefox, which raises the minimum Firefox version to 142.
 
 ### Removed
 
@@ -80,7 +91,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 2.4.1 (2024-04-20), 2.4.0 (2024-03-10), 2.3.0 (2024-02-09), 2.2.0 (2023-08-05), 2.1.0 (2023-07-20), 2.0.0 (2023-07-20) and 1.0.0 (2023-07-19) are listed on the [Releases page](https://github.com/danieltyukov/studocuhack/releases).
 
-[Unreleased]: https://github.com/danieltyukov/studocuhack/compare/v2.10.0...HEAD
+[Unreleased]: https://github.com/danieltyukov/studocuhack/compare/v2.11.0...HEAD
+[2.11.0]: https://github.com/danieltyukov/studocuhack/compare/v2.10.0...v2.11.0
 [2.10.0]: https://github.com/danieltyukov/studocuhack/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/danieltyukov/studocuhack/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/danieltyukov/studocuhack/compare/v2.7.0...v2.8.0

@@ -49,6 +49,22 @@ test('removePremiumBadges removes badge elements and small "Premium" pills', () 
     assert.ok(document.querySelector('.body'), 'longer text is not a badge');
 });
 
+test('removeStudocuDownloadButtons matches localized labels and current class hashes, keeps other links', () => {
+    const { SH, document } = setup(
+        '<div class="hidden-on-mobile"><button class="Button-module-scss-module__UoECUq__button Button-module-scss-module__UoECUq__pill">Downloaden</button></div>' +
+        '<div class="hidden-from-tablet"><button class="Button-module-scss-module__UoECUq__button">Herunterladen</button></div>' +
+        '<button class="Button-module-scss-module__x">Télécharger</button>' +
+        '<footer><a class="FooterLink-module__link">Download de app</a></footer>' +
+        '<button class="Button-module-scss-module__y">Save</button>',
+    );
+    SH.cleanup.removeStudocuDownloadButtons();
+    assert.equal(document.querySelector('.hidden-on-mobile button'), null, 'Dutch label removed');
+    assert.equal(document.querySelector('.hidden-from-tablet button'), null, 'German label removed');
+    assert.equal(document.querySelector('.Button-module-scss-module__x'), null, 'French label removed');
+    assert.ok(document.querySelector('footer a'), 'footer "Download de app" link is kept');
+    assert.ok(document.querySelector('.Button-module-scss-module__y'), 'unrelated button kept');
+});
+
 test('removeStudocuDownloadButtons only runs when our download button is enabled', () => {
     const markup =
         '<div data-test-selector="document-viewer-download-button-topbar"><button>Download</button></div>' +
