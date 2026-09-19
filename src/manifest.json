@@ -37,7 +37,8 @@
       "matches": [
         "https://www.studocu.com/*",
         "https://www.studeersnel.nl/*",
-        "https://www.studocu.vn/*"
+        "https://www.studocu.vn/*",
+        "https://www.studocu.id/*"
       ]
     }
   ],
@@ -46,7 +47,8 @@
       "matches": [
         "https://www.studocu.com/*",
         "https://www.studeersnel.nl/*",
-        "https://www.studocu.vn/*"
+        "https://www.studocu.vn/*",
+        "https://www.studocu.id/*"
       ],
       "css": ["content/style.css"],
       "js": [
