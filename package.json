@@ -1,6 +1,6 @@
 {
   "name": "studocuhack",
-  "version": "2.11.0",
+  "version": "2.12.0",
   "private": true,
   "description": "Browser extension that removes the premium blur, banners and ads on Studocu and Studeersnel, and downloads documents as PDF.",
   "license": "MIT",

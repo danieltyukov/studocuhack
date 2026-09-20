@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [2.12.0] - 2026-09-20
+
 ### Added
 
 - Support for the Indonesian site, [studocu.id](https://www.studocu.id) (#62).
@@ -95,7 +97,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 2.4.1 (2024-04-20), 2.4.0 (2024-03-10), 2.3.0 (2024-02-09), 2.2.0 (2023-08-05), 2.1.0 (2023-07-20), 2.0.0 (2023-07-20) and 1.0.0 (2023-07-19) are listed on the [Releases page](https://github.com/danieltyukov/studocuhack/releases).
 
-[Unreleased]: https://github.com/danieltyukov/studocuhack/compare/v2.11.0...HEAD
+[Unreleased]: https://github.com/danieltyukov/studocuhack/compare/v2.12.0...HEAD
+[2.12.0]: https://github.com/danieltyukov/studocuhack/compare/v2.11.0...v2.12.0
 [2.11.0]: https://github.com/danieltyukov/studocuhack/compare/v2.10.0...v2.11.0
 [2.10.0]: https://github.com/danieltyukov/studocuhack/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/danieltyukov/studocuhack/compare/v2.8.0...v2.9.0
