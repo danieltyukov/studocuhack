@@ -4,7 +4,7 @@
 
 # StudocuHack
 
-A browser extension for [studocu.com](https://www.studocu.com), [studeersnel.nl](https://www.studeersnel.nl), [studocu.vn](https://www.studocu.vn) [studocu.id](https://www.studocu.id) that removes the premium blur and upsell chrome from documents and lets you download them as a complete PDF.
+A browser extension for [studocu.com](https://www.studocu.com), [studeersnel.nl](https://www.studeersnel.nl), [studocu.vn](https://www.studocu.vn) and [studocu.id](https://www.studocu.id) that removes the premium blur and upsell chrome from documents and lets you download them as a complete PDF.
 
 Works in Chrome, Brave, Edge and Firefox 142 or newer (Manifest V3). No account, no server, no data collection.
 
@@ -48,7 +48,7 @@ To update, download the new zip, extract it over the old folder, and press the r
 
 1. Download `studocuhack-vX.Y.Z.xpi`.
 2. Open `about:addons`, click the gear icon, choose **Install Add-on From File...** and select the `.xpi`.
-3. Open a Studocu document, click the puzzle icon in the toolbar, open the extension's settings and choose **Always Allow on studocu.com** (and on studeersnel.nl if you use it).
+3. Open a Studocu document, click the puzzle icon in the toolbar, open the extension's settings and choose **Always Allow on studocu.com** (and on studeersnel.nl, studocu.vn or studocu.id if you use them).
 
 Release builds of Firefox only install add-ons that Mozilla has signed. The `.xpi` attached to a release is signed; if you build your own from source you need Firefox Developer Edition or Nightly with `xpinstall.signatures.required` set to `false`, or run it temporarily through `about:debugging`.
 

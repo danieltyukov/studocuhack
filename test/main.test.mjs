@@ -4,6 +4,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createWindow, loadScripts, tick, CONTENT_SCRIPTS } from './helpers/dom.mjs';
 import { documentFixture } from './fixtures/documents.mjs';
+import { readFileSync } from 'node:fs';
+
+const MANIFEST = JSON.parse(readFileSync(new URL('../src/manifest.json', import.meta.url), 'utf8'));
 
 test('manifest lists the content scripts in dependency order', () => {
     assert.deepEqual(CONTENT_SCRIPTS, [
@@ -13,6 +16,13 @@ test('manifest lists the content scripts in dependency order', () => {
         'content/download.js',
         'content/main.js',
     ]);
+});
+
+test('manifest targets the same sites for content scripts and web accessible resources', () => {
+    const sites = MANIFEST.content_scripts[0].matches;
+    assert.ok(sites.length >= 4, 'expected every supported Studocu site');
+    for (const pattern of sites) assert.match(pattern, /^https:\/\/www\.[a-z.]+\/\*$/);
+    assert.deepEqual(MANIFEST.web_accessible_resources[0].matches, sites);
 });
 
 test('boot on a premium document: banners gone, gated pages labelled, settings applied', async () => {

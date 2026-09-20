@@ -4,7 +4,7 @@
 
 ## How I tested it
 
-<!-- Browser and version, site (studocu.com / studeersnel.nl / studocu.vn),
+<!-- Browser and version, site (studocu.com / studeersnel.nl / studocu.vn / studocu.id),
      document type (native PDF or scanned), whether it had premium-locked pages,
      and what you checked in the viewer and in the download. -->
 

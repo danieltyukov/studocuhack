@@ -3,8 +3,10 @@
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
 ### Added
-- Indonesian Domain Support (https://www.studocu.id)
+
+- Support for the Indonesian site, [studocu.id](https://www.studocu.id) (#62).
 
 ## [2.11.0] - 2026-09-18
 
