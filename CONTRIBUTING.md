@@ -36,7 +36,7 @@ Studocu uses CSS modules, so class names look like `PremiumBannerBlobWrapper_abc
 1. Open the document page, right-click the element that came back, Inspect, and find a stable part of its class name or a `data-test-selector` attribute.
 2. Add the selector in **both** places: the matching list in `SH.SELECTORS` in `src/content/common.js` (so the script removes it when React re-mounts it) and the matching rule in `src/content/style.css` (so it never flashes before the script runs). Ads and the AI toolbar are CSS-only; put those in the `html:not([data-sh-...])` blocks so the popup toggle keeps working.
 3. Run `npm test`. There is a test that checks every selector is valid CSS.
-4. In the pull request, say which site (studocu.com, studeersnel.nl, studocu.vn) and what kind of page you saw it on.
+4. In the pull request, say which site (studocu.com, studeersnel.nl, studocu.vn, studocu.id) and what kind of page you saw it on.
 
 ## Fixing a blank or blurred page
 

@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- Support for the Indonesian site, [studocu.id](https://www.studocu.id) (#62).
+
 ## [2.11.0] - 2026-09-18
 
 ### Fixed
