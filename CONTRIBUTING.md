@@ -28,6 +28,7 @@ Load `src/` as an unpacked extension in Chrome (`chrome://extensions`, Developer
 | `src/popup/` | The toolbar popup that edits the settings. |
 | `test/` | `node --test` suites. `test/fixtures/documents.mjs` generates the four document shapes the extension has to tell apart. |
 | `docs/ARCHITECTURE.md` | How Studocu serves pages and why some cannot be unblurred. Read this before touching `pages.js`. |
+| `site/` | The project site, <https://danieltyukov.github.io/studocuhack/>. Plain HTML and CSS, published as it is by `.github/workflows/pages.yml` on every push to `master` that touches it. The fonts are committed subsets made by `scripts/fetch-fonts.sh`; `test/site.test.mjs` checks the page's local references and its dark-mode tokens. |
 
 ## Fixing a broken selector
 

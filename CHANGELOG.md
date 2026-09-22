@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- Project site at <https://danieltyukov.github.io/studocuhack/>, built from `site/` and published by a Pages workflow.
+
 ## [2.12.0] - 2026-09-20
 
 ### Added

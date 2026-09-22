@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StudocuHack</title>
+<meta name="description" content="A browser extension that removes the premium blur and the upsell chrome from Studocu documents and downloads them as one complete PDF. Chrome, Brave, Edge and Firefox. No account, no server, no data collection.">
+<link rel="icon" href="./assets/icon-128.png" type="image/png" sizes="128x128">
+<link rel="canonical" href="https://danieltyukov.github.io/studocuhack/">
+<script>
+    // Blocking, and in the head, because the alternative is a light page
+    // repainting to dark after the stylesheet has already been applied. It
+    // reads one key and sets one attribute; the CSS does the rest.
+    try {
+        var t = localStorage.getItem('studocuhack-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    } catch (e) {
+        // Private mode, or storage disabled. The page is correct without it.
+    }
+</script>
+<link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="head">
+    <div class="wrap head-inner">
+        <div class="brand">
+            <!--
+                The same tile the extension puts in place of the site logo: a
+                blue rounded square with an S in it. It is decoration beside
+                the wordmark, so it is hidden from assistive technology rather
+                than given a label that repeats the words next to it.
+            -->
+            <svg class="mark" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" focusable="false">
+                <rect width="32" height="32" rx="7" fill="currentColor"></rect>
+                <text x="16" y="23" text-anchor="middle" font-weight="700" font-size="20">S</text>
+            </svg>
+            <h1 class="wordmark">Studocu<span class="wordmark-accent">Hack</span></h1>
+        </div>
+
+        <button type="button" id="theme" class="toggle" aria-pressed="false">
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+                <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.4"></circle>
+                <path d="M8 2 A6 6 0 0 0 8 14 Z" fill="currentColor"></path>
+            </svg>
+            <span>Dark mode</span>
+        </button>
+    </div>
+</header>
+
+<!-- tabindex="-1" so the skip link moves keyboard focus and not just the
+     viewport. Without it some browsers scroll here and leave focus on the
+     link, so the next Tab goes back into the header. -->
+<main id="main" tabindex="-1">
+    <div class="wrap">
+        <p class="lede">
+            Removes the premium blur and the upsell chrome from Studocu documents,
+            and downloads them as one complete PDF.
+        </p>
+        <p class="sub">
+            A browser extension for studocu.com, studeersnel.nl, studocu.vn and studocu.id.
+            Chrome, Brave, Edge and Firefox 142 or newer. No account, no server, no data
+            collection.
+        </p>
+
+        <p class="actions">
+            <a class="btn btn-primary" href="https://github.com/danieltyukov/studocuhack/releases/latest">
+                Download the latest release
+            </a>
+            <a class="btn" href="https://github.com/danieltyukov/studocuhack">
+                Source on GitHub
+            </a>
+        </p>
+        <p class="note">
+            Every release carries a <code>.zip</code> for Chrome, Brave and Edge and an
+            <code>.xpi</code> for Firefox. Neither goes through a store, so each is loaded from
+            the file; <a href="#install">the steps</a> take a minute.
+        </p>
+    </div>
+
+    <!--
+        One screenshot, not a light and dark pair: what it shows is the site,
+        which has no dark theme, with the extension active on a premium page.
+    -->
+    <figure class="shot">
+        <img
+            src="./assets/revealed.webp"
+            width="1280"
+            height="1321"
+            alt="A Studocu document open in the browser with the extension active: the site logo replaced by the StudocuHack tile, no premium banner or Upgrade button, and a page of text fully readable where the site would have blurred it.">
+    </figure>
+
+    <div class="wrap">
+        <section class="section" aria-labelledby="does">
+            <p class="micro">What it does</p>
+            <h2 id="does">The document, without the parts that sell you something</h2>
+            <dl class="points">
+                <dt>The blur goes.</dt>
+                <dd>
+                    Every page whose content Studocu sends to your browser is shown sharp, and
+                    kept sharp while the viewer re-renders around it. Blur removal is the one
+                    thing that is always on.
+                </dd>
+
+                <dt>The upsell chrome goes with it.</dt>
+                <dd>
+                    The premium banners, the badges, the Upgrade button and the modal that covers
+                    the document are removed before they can flash. The ads and the "Ask a
+                    question" AI toolbar are hidden as well.
+                </dd>
+
+                <dt>Download as one PDF.</dt>
+                <dd>
+                    A Download button above the pages captures every page, text and figures
+                    both, and prints the whole document through the browser's own Save as PDF.
+                    Each sheet takes the size of the page it carries, so a document with mixed
+                    orientations comes out the way it went in.
+                </dd>
+
+                <dt>Every page loads on open.</dt>
+                <dd>
+                    The viewer normally renders a page only as you scroll past it. The extension
+                    walks the document once so every page is rendered and ready, then puts you
+                    back where you were.
+                </dd>
+
+                <dt>Each extra is a switch.</dt>
+                <dd>
+                    The download button, the automatic page loading, ad hiding, the AI toolbar
+                    and the logo replacement can each be turned off from the toolbar popup.
+                    Settings live in the browser's own synced storage and apply the next time a
+                    document loads.
+                </dd>
+            </dl>
+        </section>
+
+        <section class="section" aria-labelledby="cannot">
+            <p class="micro">What it cannot do</p>
+            <h2 id="cannot">A page the site never sends cannot be unblurred</h2>
+            <p>
+                Studocu renders a native PDF as two separate layers per page: a background image
+                holding the figures (rules, table borders, coloured boxes) and a separate HTML
+                text layer holding the words. The two are authorised separately, and on a
+                premium document the site never sends the text layer of the locked pages to the
+                browser at all. No extension can un-blur those pages, because the words are not
+                on your computer in any form.
+            </p>
+            <p>
+                Pages in that state keep the site's blurred preview and carry a label that says
+                so, in the viewer and in the download, so you can tell a locked page from a page
+                that failed to load. Every page whose text the site does send is unlocked in
+                full, and the browser console lists exactly which pages could not be recovered.
+            </p>
+            <figure class="small">
+                <img
+                    src="./assets/premium-locked.webp"
+                    width="1280"
+                    height="1441"
+                    loading="lazy"
+                    alt="A premium-locked page in the viewer: the page stays blurred, and a dark label under it reads that page 3 is premium-locked because Studocu does not send its text to non-subscribers.">
+                <figcaption>
+                    A premium-locked page keeps its blur and says why, instead of printing as a
+                    crisp, empty sheet.
+                </figcaption>
+            </figure>
+        </section>
+
+        <section class="section" id="install" aria-labelledby="install-heading">
+            <p class="micro">Install</p>
+            <h2 id="install-heading">From a release, in either browser</h2>
+            <p>
+                Download the archive for your browser from the
+                <a href="https://github.com/danieltyukov/studocuhack/releases/latest">latest release</a>.
+                The version number is part of the file name.
+            </p>
+
+            <h3>Chrome, Brave, Edge</h3>
+            <ol class="steps">
+                <li>Download <code>studocuhack-vX.Y.Z.zip</code> and extract it somewhere you will keep it.</li>
+                <li>Open <code>chrome://extensions</code> (Brave: <code>brave://extensions</code>, Edge: <code>edge://extensions</code>).</li>
+                <li>Turn on Developer mode, top right.</li>
+                <li>Click Load unpacked and pick the extracted folder, the one that contains <code>manifest.json</code>.</li>
+            </ol>
+            <p>
+                To update, extract the new zip over the old folder and press the reload icon on
+                the extension's card.
+            </p>
+
+            <h3>Firefox</h3>
+            <ol class="steps">
+                <li>Download <code>studocuhack-vX.Y.Z.xpi</code>.</li>
+                <li>Open <code>about:addons</code>, click the gear icon, choose Install Add-on From File and pick the file.</li>
+                <li>Open a Studocu document, click the puzzle icon in the toolbar, open the extension's settings and choose Always Allow on studocu.com, and on studeersnel.nl, studocu.vn or studocu.id if you use them.</li>
+            </ol>
+            <p>
+                Release builds of Firefox only install add-ons Mozilla has signed, and the notes
+                on each release say whether the attached <code>.xpi</code> is. An unsigned one,
+                like a build you make yourself, needs Firefox Developer Edition or Nightly with
+                <code>xpinstall.signatures.required</code> off, or a temporary load through
+                <code>about:debugging</code>.
+            </p>
+        </section>
+
+        <section class="section" aria-labelledby="download">
+            <p class="micro">Downloading a document</p>
+            <h2 id="download">Three steps, and the tab stays in front</h2>
+            <ol class="steps">
+                <li>Open the document and click the blue Download button above the pages.</li>
+                <li>A preview opens in the same tab and captures every page on its own. It reports "Capturing pages X / N" and then "Embedding images X / N". Keep the tab in the foreground: a browser throttles a background tab and the capture stalls.</li>
+                <li>When it finishes, click Print / Save as PDF, or press Ctrl+P (Cmd+P on a Mac), and choose Save as PDF as the destination.</li>
+            </ol>
+            <p>Esc, or the Close button, leaves the preview.</p>
+        </section>
+
+        <section class="section" aria-labelledby="how">
+            <p class="micro">How it works</p>
+            <h2 id="how">Two layers per page, fetched from a CDN that signs its URLs</h2>
+            <p>
+                Studocu's viewer is pdf2htmlEX output wrapped in a React virtual scroller. Each
+                page is a background image plus a positioned HTML text layer, both fetched from
+                a CDN with signed URLs that are embedded in the page. The extension reads those
+                signed parameters, works out which pages the server will actually serve, fetches
+                the full-resolution assets for those, and labels the rest. The blur itself is a
+                CSS filter the extension strips and keeps stripped as React re-renders.
+            </p>
+            <p>
+                <a href="https://github.com/danieltyukov/studocuhack/blob/master/docs/ARCHITECTURE.md">The architecture document</a>
+                has the CDN layout, the access model and the reasoning behind the premium-locked
+                detection, for anyone who wants to check the claim above before trusting it.
+            </p>
+        </section>
+
+        <section class="section" aria-labelledby="build">
+            <p class="micro">Build from source</p>
+            <h2 id="build">Plain files, one command to package them</h2>
+            <p>
+                Node 20 or newer. The extension has no runtime dependencies and no bundler: the
+                content scripts load in manifest order and share one namespace.
+            </p>
+            <pre tabindex="0" role="region" aria-label="Commands to clone, test and build"><code>git clone https://github.com/danieltyukov/studocuhack.git
+cd studocuhack
+npm install
+npm test
+npm run build</code></pre>
+            <p>
+                That runs the unit and fixture tests and packages <code>src/</code> into
+                <code>dist/</code>. Load <code>src/</code> as an unpacked extension to run the
+                working copy directly, or let web-ext launch a browser with it through
+                <code>npm run start:firefox</code> or <code>npm run start:chromium</code>.
+                <a href="https://github.com/danieltyukov/studocuhack/blob/master/CONTRIBUTING.md">CONTRIBUTING</a>
+                covers the layout and how a release is cut.
+            </p>
+        </section>
+
+        <section class="section" aria-labelledby="problems">
+            <p class="micro">When something comes back</p>
+            <h2 id="problems">Studocu renames its classes; the fix is a selector</h2>
+            <p>
+                The site changes its CSS class names from time to time. When a banner or the
+                blur reappears after a site update, the fix is almost always one new selector,
+                and pull requests for those are very welcome. For anything else,
+                <a href="https://github.com/danieltyukov/studocuhack/issues/new/choose">open an issue</a>:
+                the bug template asks for your browser, the extension version, the kind of
+                document and the lines starting with <code>StudocuHack:</code> from the browser
+                console, which say exactly which pages the extension could and could not
+                recover.
+            </p>
+        </section>
+    </div>
+</main>
+
+<footer class="foot">
+    <div class="wrap">
+        <p>
+            <a href="https://github.com/danieltyukov/studocuhack">github.com/danieltyukov/studocuhack</a>
+            &middot;
+            <a href="https://github.com/danieltyukov/studocuhack/releases">Releases</a>
+            &middot;
+            <a href="https://github.com/danieltyukov/studocuhack/blob/master/LICENSE">MIT</a>
+        </p>
+        <p class="fonts">
+            Set in subsets of two fonts, each licensed under the SIL Open Font License 1.1 and
+            renamed as the licence requires for a modified version. Instrument Sans, copyright
+            2022 the Instrument Sans Project Authors. JetBrains Mono, copyright 2020 the
+            JetBrains Mono Project Authors. Each licence text ships beside its font file in the
+            repository.
+        </p>
+        <p class="fonts">
+            This page makes no third-party requests and sets no cookie. There is nothing here to
+            consent to.
+        </p>
+        <p class="fonts">
+            Not affiliated with or endorsed by Studocu. Published for educational purposes; you
+            are responsible for complying with the terms of service of any site you use it on.
+        </p>
+    </div>
+</footer>
+
+<script type="module" src="./theme.js"></script>
+</body>
+</html>

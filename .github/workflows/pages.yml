@@ -1,0 +1,61 @@
+name: Pages
+
+# Publishes site/ as it is; there is no build step. The fonts are committed
+# subsets (scripts/fetch-fonts.sh) and the screenshots are committed webp
+# files, so the artifact is the directory.
+#
+# Pages has to be set to build from "GitHub Actions" once, in the repository
+# settings. With the default "Deploy from a branch" the deploy step fails with
+# a 404 that does not say which setting is wrong.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+# Read only at the workflow level. The two deploy credentials are granted to
+# the deploy job alone; the upload job has no reason to hold a token that can
+# publish the site.
+permissions:
+  contents: read
+
+# One deploy at a time, and a queued one is not cancelled: cancelling a running
+# deploy can leave the site half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    # `pages: read` and no more. configure-pages reads the Pages site
+    # configuration through the API and gets a 403 without it, and nothing in
+    # this job needs to write anything.
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: upload
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5

@@ -8,6 +8,8 @@ A browser extension for [studocu.com](https://www.studocu.com), [studeersnel.nl]
 
 Works in Chrome, Brave, Edge and Firefox 142 or newer (Manifest V3). No account, no server, no data collection.
 
+Project site: <https://danieltyukov.github.io/studocuhack/>
+
 ## What it does
 
 - Removes the blur from every page whose content Studocu actually sends to your browser.
@@ -104,6 +106,7 @@ src/                the extension (this is what gets packaged)
 test/               node --test suites with jsdom fixtures
 scripts/            build and Firefox signing
 docs/               architecture notes and screenshots
+site/               the project site, published to GitHub Pages as it is
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report a broken selector, add a fix, and how releases are cut.

@@ -1,0 +1,601 @@
+/*
+ * The project site.
+ *
+ * The extension has no design tokens of its own to import: its popup is a
+ * 320px panel with seven colour literals, and nothing it injects into a
+ * Studocu page sets a family or a scale. So the tokens live here, derived from
+ * those literals: the popup's ink, greys and dark ground, and the blue of the
+ * toolbar icon as the accent. Nothing below the token blocks writes a colour
+ * literal.
+ *
+ * Theme handling has one rule that is easy to get wrong: no colour may have
+ * its only definition inside a media query. The full light palette is declared
+ * on bare `:root`, and each dark block redefines only what changes. A media
+ * query that is the sole home of a token leaves that token undefined for anyone
+ * whose system preference does not match.
+ *
+ * The three dark paths, in cascade order:
+ *   1. `:root` carries light, always, for everyone.
+ *   2. System dark applies, unless the user explicitly chose light.
+ *   3. An explicit dark choice applies last, so it wins over system light.
+ *
+ * The two dark blocks must stay identical. test/site.test.mjs asserts that,
+ * since drift between them is the standard way this pattern rots.
+ *
+ * The fonts are subsets, which the OFL treats as modifications, so they carry
+ * renamed families. See scripts/fetch-fonts.sh and the OFL.txt beside each.
+ */
+
+@font-face {
+    font-family: 'StudocuHack Sans';
+    src: url('./fonts/sans/studocuhack-sans.woff2') format('woff2');
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'StudocuHack Mono';
+    src: url('./fonts/mono/studocuhack-mono.woff2') format('woff2');
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --bg: #f7f8fb;
+    --surface: #ffffff;
+    --surface-2: #eef1f7;
+    --border: #e6e8ef;
+    --border-strong: #cfd3de;
+    --text: #1a1a2e;
+    --muted: #5f6372;
+
+    /* The toolbar icon's blue is 4.5:1 against white and 4.2:1 against the
+       page: enough for a tile with a bold letter in it, not for a link or a
+       button label. --accent is that blue two steps darker, so text on it and
+       text in it both clear 4.5:1 on every ground here. --brand keeps the
+       icon's own value for the one place that is a picture, the tile, and
+       --on-brand is the letter in it, which stays white in both themes. */
+    --brand: #0a75e6;
+    --on-brand: #ffffff;
+    --accent: #0b66c8;
+    --accent-hover: #085bb5;
+    --accent-tint: #e4eefc;
+    --on-accent: #ffffff;
+
+    /* Not a colour so much as a scrim: the text colour at a few percent. */
+    --hover: rgba(26, 26, 46, 0.045);
+
+    /* Two radii: 6px for controls, 10px for panels. */
+    --r-control: 6px;
+    --r-panel: 10px;
+
+    --dur-quick: 100ms;
+    --ease: cubic-bezier(0.165, 0.84, 0.44, 1);
+
+    --font-sans: 'StudocuHack Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'StudocuHack Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --fs-micro: 11px;
+    --fs-small: 13px;
+    --fs-base: 16px;
+    --fs-large: 18px;
+    --fs-h2: 20px;
+    --fs-h1: 26px;
+    --ls-micro: 0.07em;
+    --ls-h2: -0.02em;
+    --ls-h1: -0.03em;
+
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --bg: #1b1c22;
+        --surface: #23252e;
+        --surface-2: #2a2c37;
+        --border: #2e3040;
+        --border-strong: #3e4152;
+        --text: #f2f3f7;
+        --muted: #9a9eb0;
+        --accent: #6ea1ff;
+        --accent-hover: #8db6ff;
+        --accent-tint: #1d2a44;
+        --on-accent: #1b1c22;
+        --hover: rgba(242, 243, 247, 0.06);
+        color-scheme: dark;
+    }
+}
+
+:root[data-theme='dark'] {
+    --bg: #1b1c22;
+    --surface: #23252e;
+    --surface-2: #2a2c37;
+    --border: #2e3040;
+    --border-strong: #3e4152;
+    --text: #f2f3f7;
+    --muted: #9a9eb0;
+    --accent: #6ea1ff;
+    --accent-hover: #8db6ff;
+    --accent-tint: #1d2a44;
+    --on-accent: #1b1c22;
+    --hover: rgba(242, 243, 247, 0.06);
+    color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Element defaults
+   ------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    /* Explicit, not inherited: a transparent body borrows whatever the browser
+       paints behind it, which is how a light page ends up on a dark ground. */
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--fs-base);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+p,
+dl,
+dd,
+figure,
+ol {
+    margin: 0;
+}
+
+/* The underline is the only thing marking a link, since the colour is
+   inherited, so it has to carry on its own. --muted is the faintest token that
+   still reads as a mark rather than a smudge. */
+a {
+    color: inherit;
+    text-decoration-color: var(--muted);
+    text-underline-offset: 0.18em;
+}
+
+a:hover {
+    text-decoration-color: var(--accent);
+}
+
+code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--r-control);
+}
+
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+::selection {
+    background: var(--accent-tint);
+    color: var(--text);
+}
+
+.skip {
+    position: absolute;
+    left: 12px;
+    top: -60px;
+    z-index: 2;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-control);
+    text-decoration: none;
+    transition: top var(--dur-quick) var(--ease);
+}
+
+.skip:focus {
+    top: 12px;
+}
+
+/* The measure. One column, and the screenshot is the only thing allowed wider.
+   ------------------------------------------------------------------------- */
+
+.wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* Header
+   ------------------------------------------------------------------------- */
+
+.head {
+    border-bottom: 1px solid var(--border);
+}
+
+.head-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 60px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mark {
+    color: var(--brand);
+    flex: none;
+}
+
+.mark text {
+    fill: var(--on-brand);
+    font-family: var(--font-sans);
+}
+
+.wordmark {
+    font-size: calc(var(--fs-large) + 3px);
+    font-weight: 600;
+    letter-spacing: var(--ls-h2);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* The extension sets "HACK" in the accent beside a plain "STUDOCU"; the
+   wordmark keeps that split so the header reads as the thing in the
+   screenshot under it. */
+.wordmark-accent {
+    color: var(--accent);
+}
+
+.toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: var(--r-control);
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-small);
+    cursor: pointer;
+    transition:
+        background var(--dur-quick) var(--ease),
+        color var(--dur-quick) var(--ease);
+}
+
+.toggle:hover {
+    background: var(--hover);
+    color: var(--text);
+}
+
+.toggle[aria-pressed='true'] {
+    color: var(--text);
+    border-color: var(--border);
+}
+
+/* Opening block
+   ------------------------------------------------------------------------- */
+
+.lede {
+    font-size: calc(var(--fs-h1) * 1.15);
+    line-height: 1.3;
+    letter-spacing: var(--ls-h1);
+    max-width: 26ch;
+    margin: 56px 0 0;
+    text-wrap: balance;
+}
+
+.sub {
+    margin: 18px 0 0;
+    max-width: 56ch;
+    font-size: var(--fs-large);
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 28px 0 0;
+}
+
+.btn {
+    display: inline-block;
+    padding: 11px 18px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-control);
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+        background var(--dur-quick) var(--ease),
+        border-color var(--dur-quick) var(--ease);
+}
+
+.btn:hover {
+    background: var(--hover);
+    border-color: var(--text);
+}
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.note {
+    margin: 16px 0 0;
+    max-width: 60ch;
+    font-size: var(--fs-small);
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+/* The screenshot. Wider than the measure, and the only thing that is.
+   ------------------------------------------------------------------------- */
+
+.shot {
+    max-width: 1120px;
+    margin: 48px auto 0;
+    padding: 0 24px;
+}
+
+.shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+}
+
+/* Sections
+   ------------------------------------------------------------------------- */
+
+.section {
+    margin-top: 64px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+}
+
+.micro {
+    font-size: var(--fs-micro);
+    letter-spacing: var(--ls-micro);
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.section h2 {
+    margin-top: 10px;
+    font-size: calc(var(--fs-h1) * 1.1);
+    letter-spacing: var(--ls-h1);
+    font-weight: 600;
+    line-height: 1.25;
+    max-width: 34ch;
+    /* Stops a two-line heading leaving one word alone on the second line.
+       Ignored where it is not supported, which costs nothing. */
+    text-wrap: balance;
+}
+
+.section h3 {
+    margin-top: 32px;
+    font-size: var(--fs-h2);
+    font-weight: 600;
+    letter-spacing: var(--ls-h2);
+}
+
+.section > p,
+.section dd,
+.steps li {
+    font-size: var(--fs-large);
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.section > p {
+    margin-top: 20px;
+    max-width: 62ch;
+}
+
+.section > p + p {
+    margin-top: 14px;
+}
+
+.section h3 + .steps {
+    margin-top: 12px;
+}
+
+/* What it does
+   ------------------------------------------------------------------------- */
+
+.points {
+    margin-top: 28px;
+}
+
+.points dt {
+    margin-top: 26px;
+    font-size: var(--fs-large);
+    font-weight: 600;
+    letter-spacing: var(--ls-h2);
+    color: var(--text);
+}
+
+.points dd {
+    margin-top: 6px;
+    max-width: 62ch;
+}
+
+/* Numbered steps
+   ------------------------------------------------------------------------- */
+
+.steps {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0;
+    counter-reset: step;
+    max-width: 62ch;
+}
+
+.steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 40px;
+    margin-top: 12px;
+}
+
+.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.15em;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--text);
+}
+
+/* A small figure inside a section: narrower than the measure, captioned.
+   ------------------------------------------------------------------------- */
+
+.section .small {
+    max-width: 440px;
+    margin-top: 28px;
+}
+
+.small img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+}
+
+.small figcaption {
+    margin-top: 10px;
+    max-width: 48ch;
+    font-size: var(--fs-small);
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+/* Code block
+   ------------------------------------------------------------------------- */
+
+pre {
+    margin: 20px 0 0;
+    padding: 14px 16px;
+    max-width: 62ch;
+    overflow-x: auto;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-panel);
+    font-family: var(--font-mono);
+    font-size: var(--fs-small);
+    line-height: 1.6;
+    color: var(--text);
+}
+
+pre code {
+    font-size: inherit;
+}
+
+/* Footer
+   ------------------------------------------------------------------------- */
+
+.foot {
+    margin-top: 72px;
+    padding: 32px 0 56px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: var(--fs-small);
+}
+
+.foot p + p {
+    margin-top: 14px;
+}
+
+.fonts {
+    max-width: 68ch;
+    line-height: 1.6;
+}
+
+/* Small screens
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 600px) {
+    .wrap,
+    .shot {
+        padding: 0 18px;
+    }
+
+    .lede {
+        margin-top: 36px;
+        font-size: var(--fs-h1);
+        max-width: none;
+    }
+
+    .sub {
+        font-size: var(--fs-base);
+    }
+
+    .shot {
+        margin-top: 36px;
+    }
+
+    .section {
+        margin-top: 48px;
+        padding-top: 32px;
+    }
+
+    .section h2,
+    .section > p,
+    .points dd,
+    .steps,
+    .section .small {
+        max-width: none;
+    }
+
+    .btn {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+}
