@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [2.12.1] - 2026-09-26
+
+### Fixed
+
+- The "You're one step away from the full document" sign-in wall no longer covers the document (#63). Studocu shows it, with no close button and the page dimmed and scroll-locked, to readers it flags as bots. The document underneath loads as usual, so the extension now hides the wall and lifts the scroll lock; the viewer and the Download button work as on any other page. Sign-in dialogs you open yourself (Sign in, Save) are unaffected.
+
 ### Added
 
 - Project site at <https://danieltyukov.github.io/studocuhack/>, built from `site/` and published by a Pages workflow.
@@ -101,7 +107,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 2.4.1 (2024-04-20), 2.4.0 (2024-03-10), 2.3.0 (2024-02-09), 2.2.0 (2023-08-05), 2.1.0 (2023-07-20), 2.0.0 (2023-07-20) and 1.0.0 (2023-07-19) are listed on the [Releases page](https://github.com/danieltyukov/studocuhack/releases).
 
-[Unreleased]: https://github.com/danieltyukov/studocuhack/compare/v2.12.0...HEAD
+[Unreleased]: https://github.com/danieltyukov/studocuhack/compare/v2.12.1...HEAD
+[2.12.1]: https://github.com/danieltyukov/studocuhack/compare/v2.12.0...v2.12.1
 [2.12.0]: https://github.com/danieltyukov/studocuhack/compare/v2.11.0...v2.12.0
 [2.11.0]: https://github.com/danieltyukov/studocuhack/compare/v2.10.0...v2.11.0
 [2.10.0]: https://github.com/danieltyukov/studocuhack/compare/v2.9.0...v2.10.0

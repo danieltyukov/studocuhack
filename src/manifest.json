@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "StudocuHack",
-  "version": "2.12.0",
+  "version": "2.12.1",
   "description": "Removes the premium blur, banners and ads on Studocu and Studeersnel, and downloads documents as PDF.",
   "homepage_url": "https://github.com/danieltyukov/studocuhack",
   "icons": {
