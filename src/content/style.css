@@ -143,6 +143,32 @@ body .nofilter {
     display: none !important;
 }
 
+/* ========== Sign-in wall for readers flagged as bots (issue #63) ========== */
+/* When __NEXT_DATA__ has isAntiBotAuthWallEligible, Studocu mounts a sign-in
+   Modal over the document that has no close button, portaled into
+   #main-wrapper, and scroll-locks the page with inline styles on <html>
+   (desktop) or <body> (Android). The document itself is loaded as usual.
+   Keyed off the open AuthWall <dialog> WITHOUT the `hideable` class, which the
+   Modal only adds when it can be closed, so a sign-in modal the reader opened
+   on purpose still works. Hidden rather than removed: the overlay is a React
+   portal node, and removing it makes React throw when it later unmounts. */
+
+div:has(> dialog[open][class*="AuthWall"]:not([class*="hideable"])) {
+    display: none !important;
+}
+
+html:has(dialog[open][class*="AuthWall"]:not([class*="hideable"])) {
+    overflow: visible !important;
+    padding-right: 0 !important;
+    height: auto !important;
+}
+
+html:has(dialog[open][class*="AuthWall"]:not([class*="hideable"])) body {
+    position: static !important;
+    top: auto !important;
+    overflow: visible !important;
+}
+
 /* ========== Premium badges, tags and labels ========== */
 
 [class*="PremiumBadge"],
