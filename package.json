@@ -25,6 +25,7 @@
     "web-ext": "^10.6.0"
   },
   "overrides": {
-    "image-size": "^2.0.4"
+    "image-size": "^2.0.4",
+    "shell-quote": "^1.11.0"
   }
 }
