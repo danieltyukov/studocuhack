@@ -26,6 +26,9 @@
   },
   "overrides": {
     "image-size": "^2.0.4",
-    "shell-quote": "^1.11.0"
+    "shell-quote": "^1.11.0",
+    "minimatch": "^11.0.1",
+    "multimatch": "^8.0.0",
+    "@eslint/config-array": "^0.23.5"
   }
 }
